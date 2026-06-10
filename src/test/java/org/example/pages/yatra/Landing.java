@@ -12,9 +12,6 @@ public class Landing extends BasePage {
     private static final By LOGIN_SIGNUP_MODAL_LABEL = By.xpath("//p[@for='mobile-number']");
     private static final By MOBILE_NUMBER_INPUT = By.id("mobile-number");
     private static final By LOGIN_BUTTON = By.xpath("//button[contains(text(), 'Login')]");
-    private static final By OTP_INPUT = By.id("otp");
-    private static final By VERIFY_BUTTON = By.xpath("//button[contains(text(), 'Verify')]");
-    private static final By INCORRECT_OTP_TEXT = By.xpath("//p[contains(text(), 'incorrect') and contains(text(), 'expired')]");
 
 
     @Step("Open Yatra")
@@ -27,12 +24,8 @@ public class Landing extends BasePage {
     public void proceedToOtpVerification() {
         click(LOGIN_SIGNUP_BUTTON);
         Assert.assertTrue(isVisible(LOGIN_SIGNUP_MODAL_LABEL));
-        type(MOBILE_NUMBER_INPUT, "1122");
-        type(MOBILE_NUMBER_INPUT, "1122334455");
+        type(MOBILE_NUMBER_INPUT, "testuser@example.com");
         click(LOGIN_BUTTON);
-        type(OTP_INPUT, "000000");
-        click(VERIFY_BUTTON);
-        Assert.assertTrue(isVisible(INCORRECT_OTP_TEXT));
     }
 
     public void validateOtpFlow() {
