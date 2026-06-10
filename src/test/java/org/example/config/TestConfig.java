@@ -35,6 +35,10 @@ public final class TestConfig {
         return PROPERTIES.getProperty("base.url.theinternet");
     }
 
+    public static String getYatraBaseUrl() {
+        return PROPERTIES.getProperty("base.url.yatra");
+    }
+
     public static String getSauceDemoBaseUrl() {
         return PROPERTIES.getProperty("base.url.saucedemo");
     }
