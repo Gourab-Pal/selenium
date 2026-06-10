@@ -20,7 +20,7 @@ public class Landing extends BasePage {
         return this;
     }
 
-    @Step("Proceed to otp verification")
+    @Step("Proceed to email verification")
     public void proceedToOtpVerification() {
         click(LOGIN_SIGNUP_BUTTON);
         Assert.assertTrue(isVisible(LOGIN_SIGNUP_MODAL_LABEL));
