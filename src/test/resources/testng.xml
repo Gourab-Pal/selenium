@@ -2,7 +2,7 @@
 <suite name="E2E Suite" parallel="methods" thread-count="2" verbose="1">
     <test name="Tests with ci/cd">
         <classes>
-            <class name="org.example.tests.yatra.LandingPageTest"/>
+            <class name="org.example.tests.SauceDemoLoginTest"/>
         </classes>
     </test>
 </suite>
