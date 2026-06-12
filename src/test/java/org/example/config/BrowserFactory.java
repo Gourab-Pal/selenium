@@ -35,7 +35,8 @@ public final class BrowserFactory {
         options.addArguments(
                 "--no-sandbox",
                 "--disable-dev-shm-usage",
-                "--window-size=1920,1080"
+                "--window-size=1920,1080",
+                "--incognito"
         );
         return options;
     }
@@ -45,6 +46,7 @@ public final class BrowserFactory {
         if (TestConfig.isHeadless()) {
             options.addArguments("-headless");
         }
+        options.addArguments("-private");
         return options;
     }
 
@@ -56,7 +58,8 @@ public final class BrowserFactory {
         options.addArguments(
                 "--no-sandbox",
                 "--disable-dev-shm-usage",
-                "--window-size=1920,1080"
+                "--window-size=1920,1080",
+                "--inprivate"
         );
         return options;
     }

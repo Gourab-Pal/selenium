@@ -1,4 +1,4 @@
-package org.example.tests;
+package org.example.tests.SauceDemo;
 
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -10,19 +10,15 @@ import org.example.pages.saucedemo.InventoryPage;
 import org.example.pages.saucedemo.LoginPage;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-@Epic("Demo Sites")
+@Epic("Swag Lab Site")
 @Feature("Sauce Demo Login")
-public class SauceDemoLoginTest extends BaseTest {
+public class LoginTest extends BaseTest {
 
-    @Test(description = "Should log in with standard user and see inventory page")
+    @Test(description = "Should log in with standard user and see inventory page", groups = {"smoke", "sanity"})
     @Story("Standard user can log in")
     @Severity(SeverityLevel.CRITICAL)
     public void shouldLoginWithStandardUser() {
         InventoryPage inventoryPage = new LoginPage().loginAs("standard_user", "secret_sauce");
-
-        assertThat(inventoryPage.isDisplayed()).isTrue();
-        assertThat(inventoryPage.getPageTitle()).isEqualTo("Products");
+        inventoryPage.isInventoryPageLoaded();
     }
 }

@@ -284,7 +284,7 @@ gradlew.bat clean test""")
 
     add_heading(doc, "6.4 Run a Single Test Class", 2)
     add_code_block(doc, """.\\gradlew.bat test --tests "org.example.tests.TheInternetLoginTest"
-.\\gradlew.bat test --tests "org.example.tests.SauceDemoLoginTest\"""")
+.\\gradlew.bat test --tests "org.example.tests.SauceDemo.LoginTest\"""")
 
     add_heading(doc, "6.5 Run with Different Browsers", 2)
     add_code_block(doc, """# Firefox headed
@@ -414,7 +414,7 @@ git push origin master""")
 
     add_heading(doc, "10.2 SauceDemoLoginTest", 2)
     add_table(doc, ["Field", "Value"], [
-        ["Class", "org.example.tests.SauceDemoLoginTest"],
+        ["Class", "org.example.tests.SauceDemo.LoginTest"],
         ["Site", "https://www.saucedemo.com"],
         ["Flow", "Login → Verify inventory page"],
         ["Credentials", "standard_user / secret_sauce"],
