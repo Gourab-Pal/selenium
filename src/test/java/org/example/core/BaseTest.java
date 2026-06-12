@@ -2,6 +2,7 @@ package org.example.core;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.Attachment;
+import io.qameta.allure.Step;
 import io.qameta.allure.testng.AllureTestNg;
 import org.example.config.TestConfig;
 import org.openqa.selenium.OutputType;
@@ -17,6 +18,7 @@ public abstract class BaseTest {
 
     protected WebDriver driver;
 
+    @Step("Attaching web driver")
     @BeforeMethod
     public void setUpDriver() {
         DriverManager.initDriver();
@@ -25,6 +27,7 @@ public abstract class BaseTest {
         Allure.parameter("headless", String.valueOf(TestConfig.isHeadless()));
     }
 
+    @Step("Attaching failure artifacts and removing web driver")
     @AfterMethod
     public void tearDownDriver(ITestResult result) {
         if (driver != null) {

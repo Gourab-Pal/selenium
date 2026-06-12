@@ -1,5 +1,6 @@
 package org.example.pages;
 
+import io.qameta.allure.Step;
 import org.example.config.TestConfig;
 import org.example.core.DriverManager;
 import org.openqa.selenium.By;
@@ -22,6 +23,7 @@ public abstract class BasePage {
     }
 
     // Open url
+    @Step("Opening url: {url}")
     protected void open(String url) {
         driver.get(url);
     }
@@ -37,10 +39,12 @@ public abstract class BasePage {
     }
 
     // Wait for element to be clickable and then click
+    @Step("Clicking on element: {locator}")
     protected void click(By locator) {
         waitForClickable(locator).click();
     }
 
+    @Step("Entering text '{text}' into element: {locator}")
     // Wait for element to be visible and enter text
     protected void type(By locator, String text) {
         WebElement element = waitForVisible(locator);
