@@ -9,13 +9,12 @@ import org.example.core.BaseTest;
 import org.example.pages.saucedemo.InventoryPage;
 import org.example.pages.saucedemo.LoginPage;
 import org.testng.annotations.Test;
-import
 
 @Epic("Swag Lab Site")
 @Feature("Sauce Demo Login")
 public class LoginTest extends BaseTest {
 
-    @Test(description = "Should log in with standard user and see these inventory page", groups = {"smoke", "sanity"})
+    @Test(description = "Should log in with standard user and see inventory page", groups = {"smoke", "sanity"})
     @Story("Standard user can log in")
     @Severity(SeverityLevel.CRITICAL)
     public void shouldLoginWithStandardUser() {
