@@ -1,9 +1,67 @@
+#name: E2E Tests
+#
+#on:
+#  push:
+#    branches: [main, master]
+#  pull_request:
+#
+#jobs:
+#  test:
+#    runs-on: ubuntu-latest
+#
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        browser: [chrome, firefox]
+#
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#
+#      - name: Setup Java
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: temurin
+#          java-version: 17
+#          cache: gradle
+#
+#      - name: Make Gradle wrapper executable
+#        run: chmod +x gradlew
+#
+#      - name: Run E2E tests
+#        env:
+#          HEADLESS: true
+#          BROWSER: ${{ matrix.browser }}
+#        run: ./gradlew clean test --no-daemon
+#
+#      - name: Generate Allure report
+#        if: always()
+#        run: ./gradlew allureReport --no-daemon
+#
+#      - name: Upload Allure results
+#        if: always()
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: allure-results-${{ matrix.browser }}
+#          path: build/allure-results/
+#
+#      - name: Upload Allure HTML report
+#        if: always()
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: allure-report-${{ matrix.browser }}
+#          path: build/reports/allure-report/
 name: E2E Tests
 
 on:
   push:
     branches: [main, master]
   pull_request:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   test:
@@ -12,7 +70,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser: [chrome, firefox]
+        browser: [chrome, firefox, edge]
 
     steps:
       - name: Checkout
@@ -32,22 +90,69 @@ jobs:
         env:
           HEADLESS: true
           BROWSER: ${{ matrix.browser }}
-        run: ./gradlew clean test --no-daemon
+        run: ./gradlew clean test --continue --no-daemon
 
-      - name: Generate Allure report
-        if: always()
-        run: ./gradlew allureReport --no-daemon
-
-      - name: Upload Allure results
+      - name: Upload Allure Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-results-${{ matrix.browser }}
-          path: build/allure-results/
+          path: build/allure-results
 
-      - name: Upload Allure HTML report
-        if: always()
+  publish-allure:
+    if: always()
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Download Chrome Results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-chrome
+          path: build/allure-results
+
+      - name: Download Firefox Results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-firefox
+          path: build/allure-results
+
+      - name: Download Edge Results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-edge
+          path: build/allure-results
+
+      - name: Generate Allure Report
+        run: ./gradlew allureReport --no-daemon
+
+      - name: Upload Allure HTML Report
         uses: actions/upload-artifact@v4
         with:
-          name: allure-report-${{ matrix.browser }}
-          path: build/reports/allure-report/
+          name: allure-report
+          path: build/reports/allure-report/allureReport
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/reports/allure-report/allureReport
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
