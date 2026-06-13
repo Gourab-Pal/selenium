@@ -15,15 +15,19 @@ repositories {
     mavenCentral()
 }
 
-val allureAdapterVersion = "2.35.2"
-val allureCommandlineVersion = "2.42.0"
+val seleniumVersion: String by project
+val testngVersion: String by project
+val allureAdapterVersion: String by project
+val allureCommandlineVersion: String by project
+val assertjVersion: String by project
+val slf4jVersion: String by project
 
 dependencies {
-    testImplementation("org.testng:testng:7.10.2")
-    testImplementation("org.seleniumhq.selenium:selenium-java:4.44.0")
+    testImplementation("org.testng:testng:$testngVersion")
+    testImplementation("org.seleniumhq.selenium:selenium-java:$seleniumVersion")
     testImplementation("io.qameta.allure:allure-testng:$allureAdapterVersion")
-    testImplementation("org.assertj:assertj-core:3.27.3")
-    testImplementation("org.slf4j:slf4j-simple:2.0.17")
+    testImplementation("org.assertj:assertj-core:$assertjVersion")
+    testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
 }
 
 allure {
