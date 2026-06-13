@@ -77,12 +77,6 @@ jobs:
           name: allure-results-firefox
           path: build/allure-results
 
-      - name: Download Edge Results
-        uses: actions/download-artifact@v4
-        with:
-          name: allure-results-edge
-          path: build/allure-results
-
       - name: Generate Allure Report
         run: ./gradlew allureReport --no-daemon
 
