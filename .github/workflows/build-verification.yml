@@ -1,0 +1,36 @@
+name: Build Verification
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Compile Project
+        run: ./gradlew clean compileTestJava --no-daemon
+
+      - name: Verify Resources
+        run: ./gradlew processTestResources --no-daemon
+
+      - name: Verify Test Classes
+        run: ./gradlew testClasses --no-daemon
