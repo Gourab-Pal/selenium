@@ -1,56 +1,3 @@
-#name: E2E Tests
-#
-#on:
-#  push:
-#    branches: [main, master]
-#  pull_request:
-#
-#jobs:
-#  test:
-#    runs-on: ubuntu-latest
-#
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        browser: [chrome, firefox]
-#
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v4
-#
-#      - name: Setup Java
-#        uses: actions/setup-java@v4
-#        with:
-#          distribution: temurin
-#          java-version: 17
-#          cache: gradle
-#
-#      - name: Make Gradle wrapper executable
-#        run: chmod +x gradlew
-#
-#      - name: Run E2E tests
-#        env:
-#          HEADLESS: true
-#          BROWSER: ${{ matrix.browser }}
-#        run: ./gradlew clean test --no-daemon
-#
-#      - name: Generate Allure report
-#        if: always()
-#        run: ./gradlew allureReport --no-daemon
-#
-#      - name: Upload Allure results
-#        if: always()
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: allure-results-${{ matrix.browser }}
-#          path: build/allure-results/
-#
-#      - name: Upload Allure HTML report
-#        if: always()
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: allure-report-${{ matrix.browser }}
-#          path: build/reports/allure-report/
 name: E2E Tests
 
 on:
@@ -70,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser: [chrome, firefox, edge]
+        browser: [chrome, firefox]
 
     steps:
       - name: Checkout
