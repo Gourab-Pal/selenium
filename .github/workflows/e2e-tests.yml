@@ -97,3 +97,9 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Add report link to workflow summary
+        run: |
+          echo "## 🎉 Allure Report Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 Report URL: https://gourab-pal.github.io/selenium/" >> $GITHUB_STEP_SUMMARY
