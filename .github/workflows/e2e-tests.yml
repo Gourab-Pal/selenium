@@ -37,6 +37,11 @@ jobs:
         env:
           HEADLESS: true
           BROWSER: ${{ matrix.browser }}
+          BRANCH: ${{ github.ref_name }}
+          ENVIRONMENT: github-actions
+          TRIGGERED_BY: github-actions
+          COMMIT_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
         run: ./gradlew clean test --continue --no-daemon
 
       - name: Upload Allure Results
