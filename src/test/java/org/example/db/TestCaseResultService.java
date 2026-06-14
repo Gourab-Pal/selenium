@@ -17,6 +17,7 @@ public class TestCaseResultService {
             long durationMs,
             String errorMessage,
             String stackTrace,
+            String screenshotUrl,
             String browser,
             String environment,
             long startedAt,
@@ -33,13 +34,14 @@ public class TestCaseResultService {
                 duration_ms,
                 error_message,
                 stack_trace,
+                screenshot_url,
                 browser,
                 environment,
                 started_at,
                 ended_at,
                 created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())
         """;
 
         try (Connection conn = SupabaseDB.getConnection();
@@ -53,10 +55,11 @@ public class TestCaseResultService {
             stmt.setLong(6, durationMs);
             stmt.setString(7, errorMessage);
             stmt.setString(8, stackTrace);
-            stmt.setString(9, browser);
-            stmt.setString(10, environment);
-            stmt.setTimestamp(11, new java.sql.Timestamp(startedAt));
-            stmt.setTimestamp(12, new java.sql.Timestamp(endedAt));
+            stmt.setString(9, screenshotUrl);
+            stmt.setString(10, browser);
+            stmt.setString(11, environment);
+            stmt.setTimestamp(12, new java.sql.Timestamp(startedAt));
+            stmt.setTimestamp(13, new java.sql.Timestamp(endedAt));
 
             stmt.executeUpdate();
 
