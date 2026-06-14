@@ -42,6 +42,9 @@ jobs:
           TRIGGERED_BY: github-actions
           COMMIT_SHA: ${{ github.sha }}
           RUN_ID: ${{ github.run_id }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_DB_USER: ${{ secrets.SUPABASE_DB_USER }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: ./gradlew clean test --continue --no-daemon
 
       - name: Upload Allure Results
