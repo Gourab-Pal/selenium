@@ -14,6 +14,21 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: gourab
+          POSTGRES_PASSWORD: postgres@4972
+          POSTGRES_DB: swaglabdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U gourab"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     strategy:
       fail-fast: false
       matrix:
