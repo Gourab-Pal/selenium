@@ -48,12 +48,19 @@ jobs:
         run: ./gradlew clean test --continue --no-daemon
 
       - name: Upload Failure Screenshots
+        id: screenshot_upload
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: screenshots-${{ matrix.browser }}
           path: build/screenshots
           if-no-files-found: ignore
+
+      - name: Print Artifact URL
+        if: always()
+        run: |
+          echo "Artifact URL:"
+          echo "${{ steps.screenshot_upload.outputs.artifact-url }}"
 
       - name: Upload Allure Results
         if: always()
