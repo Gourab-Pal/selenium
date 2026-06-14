@@ -1,11 +1,14 @@
 package org.example.db;
 
+import io.qameta.allure.Step;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.UUID;
 
 public class TestCaseResultService {
 
+    @Step("Updating test_case_result database...")
     public static void insertTestCaseResult(
             UUID testRunId,
             String testClass,

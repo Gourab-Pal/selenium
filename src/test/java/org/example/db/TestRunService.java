@@ -1,5 +1,7 @@
 package org.example.db;
 
+import io.qameta.allure.Step;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,6 +11,7 @@ import java.util.UUID;
 
 public class TestRunService {
 
+    @Step("Updating test_run database with suite level details...")
     public static String createTestRun() {
 
         String testRunId = UUID.randomUUID().toString();
@@ -56,6 +59,7 @@ public class TestRunService {
         }
     }
 
+    @Step("Updating pass fail count in test_run database...")
     public static Map<String, Integer> getTestRunSummary(String testRunId) {
 
         String sql = """
