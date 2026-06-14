@@ -38,8 +38,8 @@ public class TestRunService {
             stmt.setObject(1, UUID.fromString(testRunId));
             stmt.setString(2, "swaglab-tests");
             stmt.setString(3, System.getenv().getOrDefault("BRANCH", "local"));
-            stmt.setString(4, "local");
-            stmt.setString(5, "testng");
+            stmt.setString(4, System.getenv().getOrDefault("ENVIRONMENT", "local_ide"));
+            stmt.setString(5, System.getenv().getOrDefault("TRIGGERED_BY", "testng"));
             stmt.setString(6, "PARTIAL");
             stmt.setInt(7, 0);
             stmt.setInt(8, 0);
