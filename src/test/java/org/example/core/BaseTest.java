@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import org.example.utils.ScreenshotUtils;
 
 @Listeners(AllureTestNg.class)
 public abstract class BaseTest {
@@ -117,6 +118,10 @@ public abstract class BaseTest {
         // FAILURE ARTIFACTS
         // =========================
         if (driver != null && result.getStatus() == ITestResult.FAILURE) {
+            ScreenshotUtils.saveScreenshot(
+                    driver,
+                    result.getMethod().getMethodName()
+            );
             attachFailureArtifacts();
         }
 

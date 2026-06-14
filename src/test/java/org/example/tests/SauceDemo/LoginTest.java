@@ -21,5 +21,6 @@ public class LoginTest extends BaseTest {
     public void shouldLoginWithStandardUser() {
         InventoryPage inventoryPage = new LoginPage().loginAs("standard_user", "secret_sauce");
         inventoryPage.isInventoryPageLoaded();
+        Assert.fail("user failure");
     }
 }
