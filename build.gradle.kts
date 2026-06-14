@@ -28,6 +28,7 @@ dependencies {
     testImplementation("io.qameta.allure:allure-testng:$allureAdapterVersion")
     testImplementation("org.assertj:assertj-core:$assertjVersion")
     testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
+    testImplementation("org.postgresql:postgresql:42.7.3")
 }
 
 allure {
@@ -44,6 +45,6 @@ tasks.test {
 
     testLogging {
         events("passed", "skipped", "failed")
-        showStandardStreams = false
+        showStandardStreams = true
     }
 }
