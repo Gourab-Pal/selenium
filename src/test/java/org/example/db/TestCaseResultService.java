@@ -1,6 +1,7 @@
 package org.example.db;
 
 import io.qameta.allure.Step;
+import org.example.utils.AllureLogger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -62,6 +63,7 @@ public class TestCaseResultService {
             stmt.setTimestamp(13, new java.sql.Timestamp(endedAt));
 
             stmt.executeUpdate();
+            AllureLogger.log("test_case_result db insert is done");
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to insert test case result", e);
