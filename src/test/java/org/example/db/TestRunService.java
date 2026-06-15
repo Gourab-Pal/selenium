@@ -1,6 +1,7 @@
 package org.example.db;
 
 import io.qameta.allure.Step;
+import org.example.utils.AllureLogger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -50,6 +51,7 @@ public class TestRunService {
             stmt.setLong(10, 0);
 
             stmt.executeUpdate();
+            AllureLogger.log("Entries inserted into test_run table");
 
             return testRunId;
 
@@ -89,6 +91,8 @@ public class TestRunService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch test summary", e);
         }
+
+        AllureLogger.log("Entries updated into test_run table");
 
         return Map.of("total", 0, "passed", 0, "failed", 0);
     }
