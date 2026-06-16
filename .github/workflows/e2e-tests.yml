@@ -132,3 +132,18 @@ jobs:
           echo "## 🎉 Allure Report Published" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "🌐 Report URL: https://gourab-pal.github.io/selenium/" >> $GITHUB_STEP_SUMMARY
+
+      - name: Send Email Notification
+        uses: dawidd6/action-send-mail@v3
+        if: always()
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: E2E Test Execution Completed
+          to: ${{ secrets.EMAIL_USERNAME }}
+          from: ${{ secrets.EMAIL_USERNAME }}
+          body: |
+            Test execution done.
