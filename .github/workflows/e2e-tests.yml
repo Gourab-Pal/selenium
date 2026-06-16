@@ -109,6 +109,23 @@ jobs:
       - name: Generate Allure Report
         run: ./gradlew allureReport --no-daemon
 
+      - name: Extract Allure Summary
+        id: allure_summary
+        run: |
+          SUMMARY_FILE="build/reports/allure-report/allureReport/widgets/summary.json"
+
+          TOTAL=$(jq '.statistic.total' "$SUMMARY_FILE")
+          PASSED=$(jq '.statistic.passed' "$SUMMARY_FILE")
+          FAILED=$(jq '.statistic.failed' "$SUMMARY_FILE")
+          BROKEN=$(jq '.statistic.broken' "$SUMMARY_FILE")
+          SKIPPED=$(jq '.statistic.skipped' "$SUMMARY_FILE")
+
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "passed=$PASSED" >> $GITHUB_OUTPUT
+          echo "failed=$FAILED" >> $GITHUB_OUTPUT
+          echo "broken=$BROKEN" >> $GITHUB_OUTPUT
+          echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
+
       - name: Upload Allure HTML Report
         uses: actions/upload-artifact@v4
         with:
@@ -315,10 +332,23 @@ jobs:
 
                         <br><br>
 
-                        Total Tests: Coming Soon<br>
-                        Passed: Coming Soon<br>
-                        Failed: Coming Soon<br>
-                        Skipped: Coming Soon
+                        <strong>Total Tests:</strong> ${{ steps.allure_summary.outputs.total }}<br>
+
+                        <span style="color:#22c55e;">
+                          <strong>Passed:</strong> ${{ steps.allure_summary.outputs.passed }}
+                        </span><br>
+  
+                        <span style="color:#ef4444;">
+                          <strong>Failed:</strong> ${{ steps.allure_summary.outputs.failed }}
+                        </span><br>
+  
+                        <span style="color:#f97316;">
+                          <strong>Broken:</strong> ${{ steps.allure_summary.outputs.broken }}
+                        </span><br>
+  
+                        <span style="color:#eab308;">
+                            <strong>Skipped:</strong> ${{ steps.allure_summary.outputs.skipped }}
+                        </span>
                       </td>
                     </tr>
                   </table>
