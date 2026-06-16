@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body style="margin:0;padding:0;background:#0f172a;font-family:Arial,Helvetica,sans-serif;color:#e2e8f0;">
+
+<table width="100%" cellpadding="0" cellspacing="0"
+       style="background:#0f172a;padding:24px 12px;">
+
+    <tr>
+        <td align="center">
+
+            <table width="100%" cellpadding="0" cellspacing="0"
+                   style="max-width:700px;background:#111827;border:1px solid #1f2937;border-radius:16px;overflow:hidden;">
+
+                <tr>
+                    <td style="padding:32px;background:linear-gradient(135deg,#1e293b,#111827);">
+                        <h1 style="margin:0;color:#f8fafc;font-size:28px;">
+                            🚀 E2E Test Execution Completed
+                        </h1>
+
+                        <p style="margin:12px 0 0 0;color:#94a3b8;font-size:14px;">
+                            Automated notification from GitHub Actions
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="padding:24px 24px 0 24px;">
+                        <div style="padding:16px;background:#14532d;border-radius:10px;color:#dcfce7;">
+                            <strong style="font-size:18px;">
+                                ✅ Workflow Completed
+                            </strong>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="padding:24px;">
+
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td style="padding:12px 16px;background:#0b1220;border-radius:10px;">
+                                    <strong style="color:#38bdf8;">Repository</strong><br>
+                                    {{REPOSITORY}}
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="height:16px;"></div>
+
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td style="padding:12px 16px;background:#0b1220;border-radius:10px;">
+                                    <strong style="color:#38bdf8;">Workflow</strong><br>
+                                    {{WORKFLOW}}
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="height:16px;"></div>
+
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td style="padding:16px;background:#0b1220;border-radius:10px;">
+                                    <strong style="color:#38bdf8;">Execution Details</strong>
+
+                                    <br><br>
+
+                                    Trigger: {{EVENT_NAME}}<br>
+                                    Branch: {{BRANCH}}<br>
+                                    Actor: {{ACTOR}}<br>
+                                    Run ID: {{RUN_ID}}
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="height:24px;"></div>
+
+                        <table align="center" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td bgcolor="#22c55e" style="border-radius:10px;">
+                                    <a href="{{REPORT_URL}}"
+                                       style="display:inline-block;padding:14px 24px;color:#ffffff;text-decoration:none;font-weight:bold;">
+                                        📊 Open Allure Report
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="height:12px;"></div>
+
+                        <div style="text-align:center;">
+                            <strong style="color:#38bdf8;">Allure Report</strong>
+                            <br>
+
+                            <a href="{{REPORT_URL}}"
+                               style="color:#60a5fa;word-break:break-all;">
+                                {{REPORT_URL}}
+                            </a>
+                        </div>
+
+                        <div style="height:20px;"></div>
+
+                        <table align="center" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td bgcolor="#2563eb" style="border-radius:10px;">
+                                    <a href="{{WORKFLOW_URL}}"
+                                       style="display:inline-block;padding:14px 24px;color:#ffffff;text-decoration:none;font-weight:bold;">
+                                        ⚙️ Open Workflow Run
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="height:12px;"></div>
+
+                        <div style="text-align:center;">
+                            <strong style="color:#38bdf8;">Workflow Run</strong>
+                            <br>
+
+                            <a href="{{WORKFLOW_URL}}"
+                               style="color:#60a5fa;word-break:break-all;">
+                                Open GitHub Actions Run
+                            </a>
+                        </div>
+
+                        <div style="height:24px;"></div>
+
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td style="padding:16px;background:#0b1220;border-radius:10px;word-break:break-all;">
+                                    <strong style="color:#38bdf8;">Commit SHA</strong>
+
+                                    <br><br>
+
+                                    <span style="font-size:12px;color:#cbd5e1;">
+              {{SHA}}
+            </span>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="height:24px;"></div>
+
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td style="padding:16px;background:#0b1220;border-radius:10px;">
+                                    <strong style="color:#38bdf8;">Execution Summary</strong>
+
+                                    <br><br>
+
+                                    <strong>Total Tests:</strong> {{TOTAL}}<br>
+
+                                    <span style="color:#22c55e;">
+              <strong>Passed:</strong> {{PASSED}}
+            </span><br>
+
+                                    <span style="color:#ef4444;">
+              <strong>Failed:</strong> {{FAILED}}
+            </span><br>
+
+                                    <span style="color:#f97316;">
+              <strong>Broken:</strong> {{BROKEN}}
+            </span><br>
+
+                                    <span style="color:#eab308;">
+              <strong>Skipped:</strong> {{SKIPPED}}
+            </span>
+                                </td>
+                            </tr>
+                        </table>
+
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="padding:20px;text-align:center;background:#0b1220;color:#94a3b8;font-size:12px;">
+                        Generated by GitHub Actions
+                    </td>
+                </tr>
+
+            </table>
+
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>
