@@ -163,6 +163,7 @@ jobs:
             [${{ github.event_name }}]
             E2E Execution Completed - ${{ github.repository }}
           to: ${{ secrets.TO_EMAIL }}
+          cc: ${{ secrets.EMAIL_USERNAME }}
           from: ${{ secrets.EMAIL_USERNAME }}
           html_body: |
             <!DOCTYPE html>
