@@ -162,7 +162,7 @@ jobs:
           subject: >-
             [${{ github.event_name }}]
             E2E Execution Completed - ${{ github.repository }}
-          to: ${{ secrets.EMAIL_USERNAME }}
+          to: ${{ secrets.TO_EMAIL }}
           from: ${{ secrets.EMAIL_USERNAME }}
           html_body: |
             <!DOCTYPE html>
