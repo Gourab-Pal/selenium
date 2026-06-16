@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
   schedule:
-    - cron: '30 3 * * *' # Daily at 9:00 AM IST
+    - cron: '50 14 * * *' # Daily at 08:20 PM IST
 
 permissions:
   contents: read
