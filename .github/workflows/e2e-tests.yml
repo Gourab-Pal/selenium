@@ -3,7 +3,13 @@ name: E2E Tests
 on:
   push:
     branches: [main, master]
+
   pull_request:
+
+  workflow_dispatch:
+
+  schedule:
+    - cron: '30 3 * * *' # Daily at 9:00 AM IST
 
 permissions:
   contents: read
@@ -39,7 +45,7 @@ jobs:
           BROWSER: ${{ matrix.browser }}
           BRANCH: ${{ github.ref_name }}
           ENVIRONMENT: github-actions
-          TRIGGERED_BY: github-actions
+          TRIGGERED_BY: ${{ github.event_name }}
           COMMIT_SHA: ${{ github.sha }}
           RUN_ID: ${{ github.run_id }}
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
