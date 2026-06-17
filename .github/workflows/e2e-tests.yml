@@ -162,16 +162,27 @@ jobs:
           EMAIL_BODY="${EMAIL_BODY//\{\{ACTOR\}\}/${{ github.actor }}}"
           EMAIL_BODY="${EMAIL_BODY//\{\{RUN_ID\}\}/${{ github.run_id }}}"
           EMAIL_BODY="${EMAIL_BODY//\{\{SHA\}\}/${{ github.sha }}}"
-      
           EMAIL_BODY="${EMAIL_BODY//\{\{REPORT_URL\}\}/${{ steps.deployment.outputs.page_url }}}"
-      
           EMAIL_BODY="${EMAIL_BODY//\{\{WORKFLOW_URL\}\}/https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}}"
-      
           EMAIL_BODY="${EMAIL_BODY//\{\{TOTAL\}\}/${{ steps.allure_summary.outputs.total }}}"
           EMAIL_BODY="${EMAIL_BODY//\{\{PASSED\}\}/${{ steps.allure_summary.outputs.passed }}}"
           EMAIL_BODY="${EMAIL_BODY//\{\{FAILED\}\}/${{ steps.allure_summary.outputs.failed }}}"
           EMAIL_BODY="${EMAIL_BODY//\{\{BROKEN\}\}/${{ steps.allure_summary.outputs.broken }}}"
           EMAIL_BODY="${EMAIL_BODY//\{\{SKIPPED\}\}/${{ steps.allure_summary.outputs.skipped }}}"
+          TOTAL=${{ steps.allure_summary.outputs.total }}
+          PASSED=${{ steps.allure_summary.outputs.passed }}
+          if [ "$TOTAL" -gt 0 ]; then
+            PASS_PERCENT=$(( PASSED * 100 / TOTAL ))
+          else
+            PASS_PERCENT=0
+          fi
+          TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
+
+          EMAIL_BODY="${EMAIL_BODY//\{\{TIMESTAMP\}\}/$TIMESTAMP}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{PASS_PERCENT\}\}/$PASS_PERCENT}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{BROWSER\}\}/chrome, firefox}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{JAVA_VERSION\}\}/17}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{RUNNER\}\}/${{ runner.os }}}"
       
           {
             echo "content<<EOF"
