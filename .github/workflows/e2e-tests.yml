@@ -209,3 +209,12 @@ jobs:
           from: ${{ secrets.EMAIL_USERNAME }}
 
           html_body: ${{ steps.email_body.outputs.content }}
+
+      - name: Test Slack Notification
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            --data '{"text":"✅ Hello from GitHub Actions"}' \
+            "$SLACK_WEBHOOK_URL"
