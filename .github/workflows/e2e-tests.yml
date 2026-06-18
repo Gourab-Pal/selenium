@@ -210,7 +210,7 @@ jobs:
 
           html_body: ${{ steps.email_body.outputs.content }}
 
-      - name: Send Slack Notification
+      - name: Slack Summary
         if: always()
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -218,6 +218,17 @@ jobs:
           curl -X POST \
             -H "Content-Type: application/json" \
             --data '{
-              "text":"🚀 E2E Execution Completed\n\nRepository: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nTrigger: ${{ github.event_name }}\n\nTotal: ${{ steps.allure_summary.outputs.total }}\nPassed: ${{ steps.allure_summary.outputs.passed }}\nFailed: ${{ steps.allure_summary.outputs.failed }}\nBroken: ${{ steps.allure_summary.outputs.broken }}\nSkipped: ${{ steps.allure_summary.outputs.skipped }}\n\n📊 Report: ${{ steps.deployment.outputs.page_url }}\n🔗 Workflow: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              "text":"🚀 E2E Execution Completed\n\nRepository: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nTrigger: ${{ github.event_name }}\n\nTotal: ${{ steps.allure_summary.outputs.total }}\nPassed: ${{ steps.allure_summary.outputs.passed }}\nFailed: ${{ steps.allure_summary.outputs.failed }}\n\n📊 Report: ${{ steps.deployment.outputs.page_url }}"
             }' \
             "$SLACK_WEBHOOK_URL"
+      - name: Slack Failure Alert
+        if: ${{ always() && steps.allure_summary.outputs.failed != '0' }}
+        env:
+          SLACK_FAILURE_WEBHOOK_URL: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL }}
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            --data '{
+              "text":"🚨 E2E FAILURE ALERT\n\nRepository: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nFailed Tests: ${{ steps.allure_summary.outputs.failed }}\n\n📊 Report: ${{ steps.deployment.outputs.page_url }}\n🔗 Workflow: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }' \
+            "$SLACK_FAILURE_WEBHOOK_URL"
