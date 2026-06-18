@@ -20,6 +20,7 @@ public class TestCaseResultService {
             String stackTrace,
             String screenshotUrl,
             String browser,
+            String browserVersion,
             String environment,
             long startedAt,
             long endedAt
@@ -37,12 +38,13 @@ public class TestCaseResultService {
                 stack_trace,
                 screenshot_url,
                 browser,
+                browser_version,
                 environment,
                 started_at,
                 ended_at,
                 created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, now())
         """;
 
         try (Connection conn = SupabaseDB.getConnection();
@@ -58,9 +60,10 @@ public class TestCaseResultService {
             stmt.setString(8, stackTrace);
             stmt.setString(9, screenshotUrl);
             stmt.setString(10, browser);
-            stmt.setString(11, environment);
-            stmt.setTimestamp(12, new java.sql.Timestamp(startedAt));
-            stmt.setTimestamp(13, new java.sql.Timestamp(endedAt));
+            stmt.setString(11, browserVersion);
+            stmt.setString(12, environment);
+            stmt.setTimestamp(13, new java.sql.Timestamp(startedAt));
+            stmt.setTimestamp(14, new java.sql.Timestamp(endedAt));
 
             stmt.executeUpdate();
             AllureLogger.log("test_case_result db insert is done");

@@ -9,6 +9,7 @@ import org.example.db.TestRunContext;
 import org.example.db.TestRunService;
 import org.example.db.SupabaseDB;
 import org.example.utils.AllureLogger;
+import org.example.utils.BrowserVersionUtils;
 import org.example.utils.ScreenshotUtils;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
@@ -102,6 +103,7 @@ public abstract class BaseTest {
                 stackTrace,
                 screenshotPath,
                 TestConfig.getBrowser(),
+                BrowserVersionUtils.getBrowserVersion(),
                 System.getenv().getOrDefault("ENVIRONMENT", "local_ide"),
                 testStartTime,
                 endTime
