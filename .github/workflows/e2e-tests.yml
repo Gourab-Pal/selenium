@@ -210,11 +210,14 @@ jobs:
 
           html_body: ${{ steps.email_body.outputs.content }}
 
-      - name: Test Slack Notification
+      - name: Send Slack Notification
+        if: always()
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           curl -X POST \
             -H "Content-Type: application/json" \
-            --data '{"text":"✅ Hello from GitHub Actions"}' \
+            --data '{
+              "text":"🚀 E2E Execution Completed\n\nRepository: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nTrigger: ${{ github.event_name }}\n\nTotal: ${{ steps.allure_summary.outputs.total }}\nPassed: ${{ steps.allure_summary.outputs.passed }}\nFailed: ${{ steps.allure_summary.outputs.failed }}\nBroken: ${{ steps.allure_summary.outputs.broken }}\nSkipped: ${{ steps.allure_summary.outputs.skipped }}\n\n📊 Report: ${{ steps.deployment.outputs.page_url }}\n🔗 Workflow: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }' \
             "$SLACK_WEBHOOK_URL"
