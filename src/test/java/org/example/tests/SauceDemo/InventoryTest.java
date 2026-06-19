@@ -20,7 +20,6 @@ public class InventoryTest extends BaseTest {
     @Severity(SeverityLevel.NORMAL)
     public void sidebarLinksShouldVisible() {
         InventoryPage inventoryPage = new LoginPage().loginAs("standard_user", "secret_sauce");
-        Assert.fail("slack error checking test");
         inventoryPage.validateAllOptionsInSidenav();
     }
 }
