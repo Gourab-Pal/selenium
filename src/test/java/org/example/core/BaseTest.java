@@ -25,7 +25,6 @@ import java.sql.PreparedStatement;
 import java.util.Map;
 import java.util.UUID;
 
-@Listeners(BrowserAwareAllureListeners.class)
 public abstract class BaseTest {
     protected WebDriver driver;
     private long suiteStartTime;

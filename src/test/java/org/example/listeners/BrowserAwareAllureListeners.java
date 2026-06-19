@@ -4,15 +4,13 @@ import io.qameta.allure.Allure;
 import io.qameta.allure.testng.AllureTestNg;
 import org.example.config.TestConfig;
 import org.example.utils.BrowserVersionUtils;
+import org.testng.ITestListener;
 import org.testng.ITestResult;
 
 
-public class BrowserAwareAllureListeners extends AllureTestNg {
+public class BrowserAwareAllureListeners implements ITestListener {
     @Override
     public void onTestStart(ITestResult testResult) {
-        super.onTestStart(testResult);
-        // At this point the TEST uuid is current in the thread context (no fixture pushed yet).
-        // updateTestCase() correctly targets the test result here.
         String browser = TestConfig.getBrowser();
         String version = BrowserVersionUtils.getBrowserVersion();
         Allure.getLifecycle().updateTestCase(tc -> {
