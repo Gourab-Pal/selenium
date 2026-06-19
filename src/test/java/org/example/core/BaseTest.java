@@ -1,5 +1,6 @@
 package org.example.core;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.Attachment;
 import io.qameta.allure.Step;
 import io.qameta.allure.testng.AllureTestNg;
@@ -39,21 +40,18 @@ public abstract class BaseTest {
 
     @Step("Setup Driver")
     @BeforeMethod
-    public void setUpDriver() {
+    public void setUpDriver(ITestResult result) {
         testStartTime = System.currentTimeMillis();
 
         DriverManager.initDriver();
         driver = DriverManager.getDriver();
 
         String browser = TestConfig.getBrowser();
-        String browserVersion = BrowserVersionUtils.getBrowserVersion();
+        String version = BrowserVersionUtils.getBrowserVersion();
 
-        io.qameta.allure.Allure.getLifecycle().updateTestCase(tc ->
-                tc.setName(tc.getName() + " [" + browser + " " + browserVersion + "]"));
-
-        io.qameta.allure.Allure.parameter("browser", browser);
-        io.qameta.allure.Allure.parameter("browserVersion", browserVersion);
-        io.qameta.allure.Allure.parameter("headless", String.valueOf(TestConfig.isHeadless()));
+        Allure.getLifecycle().updateTestCase(tc -> {
+            tc.setName(tc.getName() + " [" + browser + " " + version + "]");
+        });
     }
 
     @Step("Teardown & Log Result")
