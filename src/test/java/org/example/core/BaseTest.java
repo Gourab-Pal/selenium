@@ -9,6 +9,7 @@ import org.example.db.TestCaseResultService;
 import org.example.db.TestRunContext;
 import org.example.db.TestRunService;
 import org.example.db.SupabaseDB;
+import org.example.listeners.BrowserAwareAllureListeners;
 import org.example.utils.AllureLogger;
 import org.example.utils.BrowserVersionUtils;
 import org.example.utils.ScreenshotUtils;
@@ -24,7 +25,6 @@ import java.sql.PreparedStatement;
 import java.util.Map;
 import java.util.UUID;
 
-@Listeners(AllureTestNg.class)
 public abstract class BaseTest {
     protected WebDriver driver;
     private long suiteStartTime;
@@ -45,16 +45,6 @@ public abstract class BaseTest {
 
         DriverManager.initDriver();
         driver = DriverManager.getDriver();
-
-        String browser = TestConfig.getBrowser();
-        String version = BrowserVersionUtils.getBrowserVersion();
-
-        Allure.getLifecycle().updateTestCase(tc -> {
-            tc.setName(tc.getName() + " [" + browser + " " + version + "]");
-            // Without this, Chrome and Firefox share the same history ID
-            // and Allure treats Firefox runs as retries of Chrome runs.
-            tc.setHistoryId(tc.getHistoryId() + "_" + browser);
-        });
     }
 
     @Step("Teardown & Log Result")
