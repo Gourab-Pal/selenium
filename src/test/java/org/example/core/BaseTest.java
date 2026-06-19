@@ -51,6 +51,9 @@ public abstract class BaseTest {
 
         Allure.getLifecycle().updateTestCase(tc -> {
             tc.setName(tc.getName() + " [" + browser + " " + version + "]");
+            // Without this, Chrome and Firefox share the same history ID
+            // and Allure treats Firefox runs as retries of Chrome runs.
+            tc.setHistoryId(tc.getHistoryId() + "_" + browser);
         });
     }
 
