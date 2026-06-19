@@ -106,10 +106,6 @@ jobs:
           name: allure-results-firefox
           path: build/allure-results
 
-      - name: Check Browser Parameter
-        run: |
-          grep -R '"parameters"' build/allure-results || true
-
       - name: Generate Allure Report
         run: ./gradlew allureReport --no-daemon
 

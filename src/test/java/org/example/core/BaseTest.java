@@ -41,9 +41,18 @@ public abstract class BaseTest {
     @BeforeMethod
     public void setUpDriver() {
         testStartTime = System.currentTimeMillis();
+
         DriverManager.initDriver();
         driver = DriverManager.getDriver();
-        io.qameta.allure.Allure.parameter("browser", TestConfig.getBrowser());
+
+        String browser = TestConfig.getBrowser();
+        String browserVersion = BrowserVersionUtils.getBrowserVersion();
+
+        io.qameta.allure.Allure.getLifecycle().updateTestCase(tc ->
+                tc.setName(tc.getName() + " [" + browser + " " + browserVersion + "]"));
+
+        io.qameta.allure.Allure.parameter("browser", browser);
+        io.qameta.allure.Allure.parameter("browserVersion", browserVersion);
         io.qameta.allure.Allure.parameter("headless", String.valueOf(TestConfig.isHeadless()));
     }
 
