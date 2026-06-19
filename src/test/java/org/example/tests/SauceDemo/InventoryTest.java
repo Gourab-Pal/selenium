@@ -20,6 +20,7 @@ public class InventoryTest extends BaseTest {
     @Severity(SeverityLevel.NORMAL)
     public void sidebarLinksShouldVisible() {
         InventoryPage inventoryPage = new LoginPage().loginAs("standard_user", "secret_sauce");
+        Assert.fail("demo test fail for email check");
         inventoryPage.validateAllOptionsInSidenav();
     }
 }
