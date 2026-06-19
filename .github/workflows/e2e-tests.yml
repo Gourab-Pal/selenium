@@ -53,6 +53,12 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: ./gradlew clean test --continue --no-daemon
 
+      - name: Print Allure Result JSON
+        if: always()
+        run: |
+          cat build/allure-results/*-result.json
+
+
       - name: Upload Failure Screenshots
         id: screenshot_upload
         if: always()
