@@ -133,6 +133,7 @@ jobs:
           echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
 
       - name: Build Failed Tests Table
+        id: build_failed_table
         if: always()
         run: |
           ROWS=""
