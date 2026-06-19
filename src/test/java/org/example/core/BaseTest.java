@@ -1,5 +1,6 @@
 package org.example.core;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.Attachment;
 import io.qameta.allure.Step;
 import io.qameta.allure.testng.AllureTestNg;
@@ -39,12 +40,21 @@ public abstract class BaseTest {
 
     @Step("Setup Driver")
     @BeforeMethod
-    public void setUpDriver() {
+    public void setUpDriver(ITestResult result) {
         testStartTime = System.currentTimeMillis();
+
         DriverManager.initDriver();
         driver = DriverManager.getDriver();
-        io.qameta.allure.Allure.parameter("browser", TestConfig.getBrowser());
-        io.qameta.allure.Allure.parameter("headless", String.valueOf(TestConfig.isHeadless()));
+
+        String browser = TestConfig.getBrowser();
+        String version = BrowserVersionUtils.getBrowserVersion();
+
+        Allure.getLifecycle().updateTestCase(tc -> {
+            tc.setName(tc.getName() + " [" + browser + " " + version + "]");
+            // Without this, Chrome and Firefox share the same history ID
+            // and Allure treats Firefox runs as retries of Chrome runs.
+            tc.setHistoryId(tc.getHistoryId() + "_" + browser);
+        });
     }
 
     @Step("Teardown & Log Result")

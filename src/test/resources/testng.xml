@@ -1,6 +1,6 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 <suite name="E2E Suite on Swag Lab" parallel="methods" thread-count="2" verbose="1">
-    <test name="Test on chrome">
+    <test name="E2E Tests">
         <classes>
             <class name="org.example.tests.SauceDemo.LoginTest"/>
             <class name="org.example.tests.SauceDemo.InventoryTest"/>
