@@ -72,7 +72,7 @@ jobs:
           curl -s -X POST -H "Content-Type: application/json" -d @/tmp/slack_summary.json "$SLACK_WEBHOOK_URL"
 
       - name: Slack Failure Alert
-        if: ${{ always() && inputs.failed != '0' }}
+        if: ${{ always() && (inputs.failed != '0' || inputs.broken != '0') }}
         env:
           SLACK_FAILURE_WEBHOOK_URL: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL }}
         run: |
