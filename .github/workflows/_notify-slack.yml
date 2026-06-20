@@ -1,0 +1,109 @@
+name: Notify Slack
+
+on:
+  workflow_call:
+    inputs:
+      total:
+        type: string
+        required: true
+      passed:
+        type: string
+        required: true
+      failed:
+        type: string
+        required: true
+      broken:
+        type: string
+        required: true
+      skipped:
+        type: string
+        required: true
+      report_url:
+        type: string
+        required: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Chrome Results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-chrome
+          path: build/allure-results
+
+      - name: Download Firefox Results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-firefox
+          path: build/allure-results
+
+      - name: Slack Summary
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          TOTAL="${{ inputs.total }}"
+          PASSED="${{ inputs.passed }}"
+          FAILED="${{ inputs.failed }}"
+          BROKEN="${{ inputs.broken }}"
+          SKIPPED="${{ inputs.skipped }}"
+          REPORT_URL="${{ inputs.report_url }}"
+          if [ "$TOTAL" -gt 0 ]; then PASS_PCT=$(( PASSED * 100 / TOTAL )); else PASS_PCT=0; fi
+          if [ "$FAILED" = "0" ] && [ "$BROKEN" = "0" ]; then
+            STATUS_EMOJI="✅"; STATUS_TEXT="All tests passed"; COLOR="#22c55e"
+          else
+            STATUS_EMOJI="❌"; STATUS_TEXT="Some tests failed"; COLOR="#ef4444"
+          fi
+          jq -n \
+            --arg color "$COLOR" \
+            --arg status "${STATUS_EMOJI} *${STATUS_TEXT}* — ${PASS_PCT}% pass rate" \
+            --arg stats "🟢 Passed: ${PASSED}   🔴 Failed: ${FAILED}   🟠 Broken: ${BROKEN}   ⚪ Skipped: ${SKIPPED}   📊 Total: ${TOTAL}" \
+            --arg trigger "${{ github.event_name }}" \
+            --arg repo "${{ github.repository }}" \
+            --arg branch "${{ github.ref_name }}" \
+            --arg actor "${{ github.actor }}" \
+            --arg run_id "${{ github.run_id }}" \
+            --arg report_url "$REPORT_URL" \
+            --arg workflow_url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            '{"attachments":[{"color":$color,"blocks":[{"type":"header","text":{"type":"plain_text","text":"E2E Test Execution Completed","emoji":true}},{"type":"section","text":{"type":"mrkdwn","text":$status}},{"type":"section","text":{"type":"mrkdwn","text":$stats}},{"type":"divider"},{"type":"section","fields":[{"type":"mrkdwn","text":("*Repo*\n"+$repo)},{"type":"mrkdwn","text":("*Branch*\n"+$branch)},{"type":"mrkdwn","text":("*Actor*\n"+$actor)},{"type":"mrkdwn","text":("*Trigger*\n"+$trigger)},{"type":"mrkdwn","text":("*Run ID*\n"+$run_id)}]},{"type":"actions","elements":[{"type":"button","text":{"type":"plain_text","text":"📊 Allure Report","emoji":true},"url":$report_url,"style":"primary"},{"type":"button","text":{"type":"plain_text","text":"⚙ Workflow Run","emoji":true},"url":$workflow_url}]}]}]}' \
+            > /tmp/slack_summary.json
+          curl -s -X POST -H "Content-Type: application/json" -d @/tmp/slack_summary.json "$SLACK_WEBHOOK_URL"
+
+      - name: Slack Failure Alert
+        if: ${{ always() && inputs.failed != '0' }}
+        env:
+          SLACK_FAILURE_WEBHOOK_URL: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL }}
+        run: |
+          FAILED="${{ inputs.failed }}"
+          BROKEN="${{ inputs.broken }}"
+          REPORT_URL="${{ inputs.report_url }}"
+          FAIL_TEXT=""
+          for FILE in build/allure-results/*-result.json; do
+            STATUS=$(jq -r '.status // ""' "$FILE")
+            if [ "$STATUS" != "failed" ] && [ "$STATUS" != "broken" ]; then
+              continue
+            fi
+            NAME=$(jq -r '.name // "Unknown"' "$FILE")
+            MESSAGE=$(jq -r '.statusDetails.message // ""' "$FILE" | head -c 120)
+            TRACE=$(jq -r '.statusDetails.trace // ""' "$FILE")
+            ERROR_TYPE=$(echo "$TRACE" | head -1 | grep -oE '[A-Za-z][A-Za-z0-9_]*(Exception|Error|Failure)' | tail -1)
+            if [ -z "$ERROR_TYPE" ]; then
+              ERROR_TYPE=$(echo "$MESSAGE" | grep -oE '[A-Za-z][A-Za-z0-9_]*(Exception|Error|Failure)' | tail -1)
+            fi
+            if [ -z "$ERROR_TYPE" ]; then ERROR_TYPE="Unknown"; fi
+            if [ "$STATUS" = "failed" ]; then ICON="🔴"; else ICON="🟠"; fi
+            FAIL_TEXT="${FAIL_TEXT}${ICON} *${NAME}*"$'\n'"   ↳ \`${ERROR_TYPE}\` ${MESSAGE}"$'\n'
+          done
+          jq -n \
+            --arg failed "$FAILED" \
+            --arg broken "$BROKEN" \
+            --arg repo "${{ github.repository }}" \
+            --arg branch "${{ github.ref_name }}" \
+            --arg fail_text "$FAIL_TEXT" \
+            --arg report_url "$REPORT_URL" \
+            --arg workflow_url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            '{"attachments":[{"color":"#ef4444","blocks":[{"type":"header","text":{"type":"plain_text","text":"🚨 E2E Failure Alert","emoji":true}},{"type":"section","fields":[{"type":"mrkdwn","text":("*Repo*\n"+$repo)},{"type":"mrkdwn","text":("*Branch*\n"+$branch)},{"type":"mrkdwn","text":("*Failed*\n🔴 "+$failed)},{"type":"mrkdwn","text":("*Broken*\n🟠 "+$broken)}]},{"type":"divider"},{"type":"section","text":{"type":"mrkdwn","text":("*Failed Tests*\n"+$fail_text)}},{"type":"divider"},{"type":"actions","elements":[{"type":"button","text":{"type":"plain_text","text":"📊 Allure Report","emoji":true},"url":$report_url,"style":"danger"},{"type":"button","text":{"type":"plain_text","text":"⚙ Workflow Run","emoji":true},"url":$workflow_url}]}]}]}' \
+            > /tmp/slack_failure.json
+          curl -s -X POST -H "Content-Type: application/json" -d @/tmp/slack_failure.json "$SLACK_FAILURE_WEBHOOK_URL"

@@ -1,0 +1,197 @@
+name: Publish Report
+
+on:
+  workflow_call:
+    outputs:
+      total:      { value: ${{ jobs.publish.outputs.total }} }
+      passed:     { value: ${{ jobs.publish.outputs.passed }} }
+      failed:     { value: ${{ jobs.publish.outputs.failed }} }
+      broken:     { value: ${{ jobs.publish.outputs.broken }} }
+      skipped:    { value: ${{ jobs.publish.outputs.skipped }} }
+      report_url: { value: ${{ jobs.publish.outputs.report_url }} }
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    outputs:
+      total:      ${{ steps.allure_summary.outputs.total }}
+      passed:     ${{ steps.allure_summary.outputs.passed }}
+      failed:     ${{ steps.allure_summary.outputs.failed }}
+      broken:     ${{ steps.allure_summary.outputs.broken }}
+      skipped:    ${{ steps.allure_summary.outputs.skipped }}
+      report_url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Download Chrome Results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-chrome
+          path: build/allure-results
+
+      - name: Download Firefox Results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-firefox
+          path: build/allure-results
+
+      - name: Generate Allure Report
+        run: ./gradlew allureReport --no-daemon
+
+      - name: Extract Allure Summary
+        id: allure_summary
+        run: |
+          SUMMARY_FILE="build/reports/allure-report/allureReport/widgets/summary.json"
+          TOTAL=$(jq '.statistic.total' "$SUMMARY_FILE")
+          PASSED=$(jq '.statistic.passed' "$SUMMARY_FILE")
+          FAILED=$(jq '.statistic.failed' "$SUMMARY_FILE")
+          BROKEN=$(jq '.statistic.broken' "$SUMMARY_FILE")
+          SKIPPED=$(jq '.statistic.skipped' "$SUMMARY_FILE")
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "passed=$PASSED" >> $GITHUB_OUTPUT
+          echo "failed=$FAILED" >> $GITHUB_OUTPUT
+          echo "broken=$BROKEN" >> $GITHUB_OUTPUT
+          echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
+
+      - name: Build Failed Tests Table
+        id: build_failed_table
+        if: always()
+        run: |
+          ROWS=""
+          for FILE in build/allure-results/*-result.json; do
+            STATUS=$(jq -r '.status // ""' "$FILE")
+            if [ "$STATUS" != "failed" ] && [ "$STATUS" != "broken" ]; then
+              continue
+            fi
+            NAME=$(jq -r '.name // "Unknown"' "$FILE")
+            MESSAGE=$(jq -r '.statusDetails.message // ""' "$FILE" | head -c 150)
+            TRACE=$(jq -r '.statusDetails.trace // ""' "$FILE")
+            ERROR_TYPE=$(echo "$TRACE" | head -1 | grep -oE '[A-Za-z][A-Za-z0-9_]*(Exception|Error|Failure)' | tail -1)
+            if [ -z "$ERROR_TYPE" ]; then
+              ERROR_TYPE=$(echo "$MESSAGE" | grep -oE '[A-Za-z][A-Za-z0-9_]*(Exception|Error|Failure)' | tail -1)
+            fi
+            if [ -z "$ERROR_TYPE" ]; then ERROR_TYPE="Unknown"; fi
+            if [ "$STATUS" = "failed" ]; then
+              STATUS_COLOR="#f87171"; STATUS_BG="#450a0a"
+            else
+              STATUS_COLOR="#fb923c"; STATUS_BG="#2d1800"
+            fi
+            case "$ERROR_TYPE" in
+              AssertionError)                  ERR_COLOR="#fef08a"; ERR_BG="#713f12" ;;
+              NoSuchElementException)          ERR_COLOR="#fca5a5"; ERR_BG="#450a0a" ;;
+              TimeoutException)                ERR_COLOR="#fdba74"; ERR_BG="#431407" ;;
+              StaleElementReferenceException)  ERR_COLOR="#c4b5fd"; ERR_BG="#2e1065" ;;
+              ElementNotInteractableException) ERR_COLOR="#6ee7b7"; ERR_BG="#064e3b" ;;
+              *)                               ERR_COLOR="#94a3b8"; ERR_BG="#1e293b" ;;
+            esac
+            ROWS="${ROWS}<tr style='background:#0d1f2d;'>"
+            ROWS="${ROWS}<td style='padding:12px 14px;border-bottom:1px solid #1e293b;color:#e2e8f0;font-size:13px;'>${NAME}</td>"
+            ROWS="${ROWS}<td style='padding:12px 14px;border-bottom:1px solid #1e293b;text-align:center;'><span style='display:inline-block;padding:3px 10px;border-radius:20px;background:${STATUS_BG};color:${STATUS_COLOR};font-size:11px;font-weight:600;text-transform:uppercase;'>${STATUS}</span></td>"
+            ROWS="${ROWS}<td style='padding:12px 14px;border-bottom:1px solid #1e293b;text-align:center;'><span style='display:inline-block;padding:3px 10px;border-radius:20px;background:${ERR_BG};color:${ERR_COLOR};font-size:11px;font-weight:600;'>${ERROR_TYPE}</span></td>"
+            ROWS="${ROWS}<td style='padding:12px 14px;border-bottom:1px solid #1e293b;color:#94a3b8;font-size:12px;font-family:monospace;'>${MESSAGE}</td>"
+            ROWS="${ROWS}</tr>"
+          done
+          if [ -n "$ROWS" ]; then
+            TABLE="<tr><td style='padding:0 30px 25px;background:#0b1524;'>"
+            TABLE="${TABLE}<table width='100%' cellpadding='0' cellspacing='0' style='background:#081120;border-radius:16px;border:1px solid #3b0d0d;overflow:hidden;'>"
+            TABLE="${TABLE}<tr><td colspan='4' style='padding:15px 20px;background:linear-gradient(90deg,#1a0505,#0d0505);border-bottom:1px solid #3b0d0d;'>"
+            TABLE="${TABLE}<span style='color:#f87171;font-weight:700;font-size:14px;'>❌ Failed / Broken Tests</span></td></tr>"
+            TABLE="${TABLE}<tr style='background:#0d1626;'>"
+            TABLE="${TABLE}<th style='padding:10px 14px;text-align:left;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1e293b;'>Test Name</th>"
+            TABLE="${TABLE}<th style='padding:10px 14px;text-align:center;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1e293b;'>Status</th>"
+            TABLE="${TABLE}<th style='padding:10px 14px;text-align:center;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1e293b;'>Error Type</th>"
+            TABLE="${TABLE}<th style='padding:10px 14px;text-align:left;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1e293b;'>Reason</th>"
+            TABLE="${TABLE}</tr>${ROWS}</table></td></tr>"
+          else
+            TABLE=""
+          fi
+          echo "failed_table<<FAILED_TABLE_EOF" >> $GITHUB_OUTPUT
+          echo "$TABLE" >> $GITHUB_OUTPUT
+          echo "FAILED_TABLE_EOF" >> $GITHUB_OUTPUT
+
+      - name: Upload Allure HTML Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: build/reports/allure-report/allureReport
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/reports/allure-report/allureReport
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Add report link to workflow summary
+        run: |
+          echo "## 🎉 Allure Report Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 Report URL: https://gourab-pal.github.io/selenium/" >> $GITHUB_STEP_SUMMARY
+
+      - name: Prepare Email Body
+        id: email_body
+        run: |
+          EMAIL_BODY=$(cat .github/email/report-template.html)
+          EMAIL_BODY="${EMAIL_BODY//\{\{REPOSITORY\}\}/${{ github.repository }}}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{WORKFLOW\}\}/${{ github.workflow }}}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{EVENT_NAME\}\}/${{ github.event_name }}}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{BRANCH\}\}/${{ github.ref_name }}}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{ACTOR\}\}/${{ github.actor }}}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{RUN_ID\}\}/${{ github.run_id }}}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{SHA\}\}/${{ github.sha }}}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{REPORT_URL\}\}/${{ steps.deployment.outputs.page_url }}}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{WORKFLOW_URL\}\}/https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{TOTAL\}\}/${{ steps.allure_summary.outputs.total }}}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{PASSED\}\}/${{ steps.allure_summary.outputs.passed }}}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{FAILED\}\}/${{ steps.allure_summary.outputs.failed }}}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{BROKEN\}\}/${{ steps.allure_summary.outputs.broken }}}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{SKIPPED\}\}/${{ steps.allure_summary.outputs.skipped }}}"
+          TOTAL=${{ steps.allure_summary.outputs.total }}
+          PASSED=${{ steps.allure_summary.outputs.passed }}
+          if [ "$TOTAL" -gt 0 ]; then PASS_PERCENT=$(( PASSED * 100 / TOTAL )); else PASS_PERCENT=0; fi
+          TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
+          EMAIL_BODY="${EMAIL_BODY//\{\{TIMESTAMP\}\}/$TIMESTAMP}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{PASS_PERCENT\}\}/$PASS_PERCENT}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{BROWSER\}\}/chrome, firefox}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{JAVA_VERSION\}\}/17}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{RUNNER\}\}/${{ runner.os }}}"
+          EMAIL_BODY="${EMAIL_BODY//\{\{FAILED_TESTS_TABLE\}\}/${{ steps.build_failed_table.outputs.failed_table }}}"
+          {
+            echo "content<<EOF"
+            echo "$EMAIL_BODY"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Send Email Notification
+        uses: dawidd6/action-send-mail@v3
+        if: always()
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: >-
+            [${{ github.event_name }}
+            E2E Execution Completed - ${{ github.repository }}
+          to: ${{ secrets.TO_EMAIL }}
+          cc: ${{ secrets.EMAIL_USERNAME }}
+          from: ${{ secrets.EMAIL_USERNAME }}
+          html_body: ${{ steps.email_body.outputs.content }}
