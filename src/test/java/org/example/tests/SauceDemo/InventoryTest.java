@@ -8,7 +8,6 @@ import io.qameta.allure.Story;
 import org.example.core.BaseTest;
 import org.example.pages.saucedemo.InventoryPage;
 import org.example.pages.saucedemo.LoginPage;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.NoSuchElementException;
@@ -23,6 +22,5 @@ public class InventoryTest extends BaseTest {
     public void sidebarLinksShouldVisible() {
         InventoryPage inventoryPage = new LoginPage().loginAs("standard_user", "secret_sauce");
         inventoryPage.validateAllOptionsInSidenav();
-        throw new NoSuchElementException("requested element not found in DOM");
     }
 }
