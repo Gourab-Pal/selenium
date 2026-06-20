@@ -54,7 +54,7 @@ jobs:
           if [ "$FAILED" = "0" ] && [ "$BROKEN" = "0" ]; then
             STATUS_EMOJI="✅"; STATUS_TEXT="All tests passed"; COLOR="#22c55e"
           else
-            STATUS_EMOJI="❌"; STATUS_TEXT="Some tests failed"; COLOR="#ef4444"
+            STATUS_EMOJI="❌"; STATUS_TEXT="Some of the tests failed"; COLOR="#ef4444"
           fi
           jq -n \
             --arg color "$COLOR" \
