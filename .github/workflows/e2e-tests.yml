@@ -1,433 +1,845 @@
 name: E2E Tests
 
+
+
 on:
+
   push:
+
     branches: [main, master]
+
+
 
   pull_request:
 
+
+
   workflow_dispatch:
 
+
+
   schedule:
+
     - cron: '50 14 * * *' # Daily at 08:20 PM IST
 
+
+
 permissions:
+
   contents: read
+
   pages: write
+
   id-token: write
 
+
+
 jobs:
+
   test:
+
     runs-on: ubuntu-latest
+
+
 
     strategy:
+
       fail-fast: false
+
       matrix:
+
         browser: [chrome, firefox]
 
+
+
     steps:
+
       - name: Checkout
+
         uses: actions/checkout@v4
 
+
+
       - name: Setup Java
+
         uses: actions/setup-java@v4
+
         with:
+
           distribution: temurin
+
           java-version: 17
+
           cache: gradle
 
+
+
       - name: Make Gradle wrapper executable
+
         run: chmod +x gradlew
+
+
 
       - name: Run E2E tests
+
         env:
+
           HEADLESS: true
+
           BROWSER: ${{ matrix.browser }}
+
           BRANCH: ${{ github.ref_name }}
+
           ENVIRONMENT: github-actions
+
           TRIGGERED_BY: ${{ github.event_name }}
+
           COMMIT_SHA: ${{ github.sha }}
+
           RUN_ID: ${{ github.run_id }}
+
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
           SUPABASE_DB_USER: ${{ secrets.SUPABASE_DB_USER }}
+
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
         run: ./gradlew clean test --continue --no-daemon
 
+
+
       - name: Print Allure Result JSON
+
         if: always()
+
         run: |
+
           cat build/allure-results/*-result.json
 
+
+
       - name: Upload Failure Screenshots
+
         id: screenshot_upload
+
         if: always()
+
         uses: actions/upload-artifact@v4
+
         with:
+
           name: screenshots-${{ matrix.browser }}
+
           path: build/screenshots
+
           if-no-files-found: ignore
 
+
+
       - name: Print Artifact URL
+
         if: always()
+
         run: |
+
           echo "Artifact URL:"
+
           echo "${{ steps.screenshot_upload.outputs.artifact-url }}"
 
+
+
       - name: Upload Allure Results
+
         if: always()
+
         uses: actions/upload-artifact@v4
+
         with:
+
           name: allure-results-${{ matrix.browser }}
+
           path: build/allure-results
+
+
 
   publish-allure:
+
     if: always()
+
     needs: test
+
     runs-on: ubuntu-latest
 
+    outputs:
+
+      total:      ${{ steps.allure_summary.outputs.total }}
+
+      passed:     ${{ steps.allure_summary.outputs.passed }}
+
+      failed:     ${{ steps.allure_summary.outputs.failed }}
+
+      broken:     ${{ steps.allure_summary.outputs.broken }}
+
+      skipped:    ${{ steps.allure_summary.outputs.skipped }}
+
+      report_url: ${{ steps.deployment.outputs.page_url }}
+
+
+
     steps:
+
       - name: Checkout
+
         uses: actions/checkout@v4
 
+
+
       - name: Setup Java
+
         uses: actions/setup-java@v4
+
         with:
+
           distribution: temurin
+
           java-version: 17
+
           cache: gradle
 
+
+
       - name: Make Gradle wrapper executable
+
         run: chmod +x gradlew
 
+
+
       - name: Download Chrome Results
+
         uses: actions/download-artifact@v4
+
         with:
+
           name: allure-results-chrome
+
           path: build/allure-results
+
+
 
       - name: Download Firefox Results
+
         uses: actions/download-artifact@v4
+
         with:
+
           name: allure-results-firefox
+
           path: build/allure-results
 
+
+
       - name: Generate Allure Report
+
         run: ./gradlew allureReport --no-daemon
 
+
+
       - name: Extract Allure Summary
+
         id: allure_summary
+
         run: |
+
           SUMMARY_FILE="build/reports/allure-report/allureReport/widgets/summary.json"
 
+
+
           TOTAL=$(jq '.statistic.total' "$SUMMARY_FILE")
+
           PASSED=$(jq '.statistic.passed' "$SUMMARY_FILE")
+
           FAILED=$(jq '.statistic.failed' "$SUMMARY_FILE")
+
           BROKEN=$(jq '.statistic.broken' "$SUMMARY_FILE")
+
           SKIPPED=$(jq '.statistic.skipped' "$SUMMARY_FILE")
 
+
+
           echo "total=$TOTAL" >> $GITHUB_OUTPUT
+
           echo "passed=$PASSED" >> $GITHUB_OUTPUT
+
           echo "failed=$FAILED" >> $GITHUB_OUTPUT
+
           echo "broken=$BROKEN" >> $GITHUB_OUTPUT
+
           echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
 
+
+
       - name: Build Failed Tests Table
+
         id: build_failed_table
+
         if: always()
+
         run: |
+
           ROWS=""
+
           for FILE in build/allure-results/*-result.json; do
+
             STATUS=$(jq -r '.status // ""' "$FILE")
+
             if [ "$STATUS" != "failed" ] && [ "$STATUS" != "broken" ]; then
+
               continue
+
             fi
+
+
 
             NAME=$(jq -r '.name // "Unknown"' "$FILE")
+
             MESSAGE=$(jq -r '.statusDetails.message // ""' "$FILE" | head -c 150)
+
             TRACE=$(jq -r '.statusDetails.trace // ""' "$FILE")
 
+
+
             ERROR_TYPE=$(echo "$TRACE" | head -1 | grep -oE '[A-Za-z][A-Za-z0-9_]*(Exception|Error|Failure)' | tail -1)
+
             if [ -z "$ERROR_TYPE" ]; then
+
               ERROR_TYPE=$(echo "$MESSAGE" | grep -oE '[A-Za-z][A-Za-z0-9_]*(Exception|Error|Failure)' | tail -1)
+
             fi
+
             if [ -z "$ERROR_TYPE" ]; then
+
               ERROR_TYPE="Unknown"
+
             fi
+
+
 
             if [ "$STATUS" = "failed" ]; then
+
               STATUS_COLOR="#f87171"; STATUS_BG="#450a0a"
+
             else
+
               STATUS_COLOR="#fb923c"; STATUS_BG="#2d1800"
+
             fi
+
+
 
             case "$ERROR_TYPE" in
+
               AssertionError)                  ERR_COLOR="#fef08a"; ERR_BG="#713f12" ;;
+
               NoSuchElementException)          ERR_COLOR="#fca5a5"; ERR_BG="#450a0a" ;;
+
               TimeoutException)                ERR_COLOR="#fdba74"; ERR_BG="#431407" ;;
+
               StaleElementReferenceException)  ERR_COLOR="#c4b5fd"; ERR_BG="#2e1065" ;;
+
               ElementNotInteractableException) ERR_COLOR="#6ee7b7"; ERR_BG="#064e3b" ;;
+
               *)                               ERR_COLOR="#94a3b8"; ERR_BG="#1e293b" ;;
+
             esac
 
+
+
             ROWS="${ROWS}<tr style='background:#0d1f2d;'>"
+
             ROWS="${ROWS}<td style='padding:12px 14px;border-bottom:1px solid #1e293b;color:#e2e8f0;font-size:13px;'>${NAME}</td>"
+
             ROWS="${ROWS}<td style='padding:12px 14px;border-bottom:1px solid #1e293b;text-align:center;'><span style='display:inline-block;padding:3px 10px;border-radius:20px;background:${STATUS_BG};color:${STATUS_COLOR};font-size:11px;font-weight:600;text-transform:uppercase;'>${STATUS}</span></td>"
+
             ROWS="${ROWS}<td style='padding:12px 14px;border-bottom:1px solid #1e293b;text-align:center;'><span style='display:inline-block;padding:3px 10px;border-radius:20px;background:${ERR_BG};color:${ERR_COLOR};font-size:11px;font-weight:600;'>${ERROR_TYPE}</span></td>"
+
             ROWS="${ROWS}<td style='padding:12px 14px;border-bottom:1px solid #1e293b;color:#94a3b8;font-size:12px;font-family:monospace;'>${MESSAGE}</td>"
+
             ROWS="${ROWS}</tr>"
+
           done
+
+
 
           if [ -n "$ROWS" ]; then
+
             TABLE="<tr><td style='padding:0 30px 25px;background:#0b1524;'>"
+
             TABLE="${TABLE}<table width='100%' cellpadding='0' cellspacing='0' style='background:#081120;border-radius:16px;border:1px solid #3b0d0d;overflow:hidden;'>"
+
             TABLE="${TABLE}<tr><td colspan='4' style='padding:15px 20px;background:linear-gradient(90deg,#1a0505,#0d0505);border-bottom:1px solid #3b0d0d;'>"
+
             TABLE="${TABLE}<span style='color:#f87171;font-weight:700;font-size:14px;'>❌ Failed / Broken Tests</span>"
+
             TABLE="${TABLE}</td></tr>"
+
             TABLE="${TABLE}<tr style='background:#0d1626;'>"
+
             TABLE="${TABLE}<th style='padding:10px 14px;text-align:left;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1e293b;'>Test Name</th>"
+
             TABLE="${TABLE}<th style='padding:10px 14px;text-align:center;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1e293b;'>Status</th>"
+
             TABLE="${TABLE}<th style='padding:10px 14px;text-align:center;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1e293b;'>Error Type</th>"
+
             TABLE="${TABLE}<th style='padding:10px 14px;text-align:left;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1e293b;'>Reason</th>"
+
             TABLE="${TABLE}</tr>${ROWS}</table></td></tr>"
+
           else
+
             TABLE=""
+
           fi
+
+
 
           echo "failed_table<<FAILED_TABLE_EOF" >> $GITHUB_OUTPUT
+
           echo "$TABLE" >> $GITHUB_OUTPUT
+
           echo "FAILED_TABLE_EOF" >> $GITHUB_OUTPUT
 
+
+
       - name: Upload Allure HTML Report
+
         uses: actions/upload-artifact@v4
+
         with:
+
           name: allure-report
+
           path: build/reports/allure-report/allureReport
+
+
 
       - name: Setup Pages
+
         uses: actions/configure-pages@v5
 
+
+
       - name: Upload Pages Artifact
+
         uses: actions/upload-pages-artifact@v3
+
         with:
+
           path: build/reports/allure-report/allureReport
 
+
+
       - name: Deploy to GitHub Pages
+
         id: deployment
+
         uses: actions/deploy-pages@v4
 
+
+
       - name: Add report link to workflow summary
+
         run: |
+
           echo "## 🎉 Allure Report Published" >> $GITHUB_STEP_SUMMARY
+
           echo "" >> $GITHUB_STEP_SUMMARY
+
           echo "🌐 Report URL: https://gourab-pal.github.io/selenium/" >> $GITHUB_STEP_SUMMARY
 
+
+
       - name: Prepare Email Body
+
         id: email_body
+
         run: |
+
           EMAIL_BODY=$(cat .github/email/report-template.html)
 
+
+
           EMAIL_BODY="${EMAIL_BODY//\{\{REPOSITORY\}\}/${{ github.repository }}}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{WORKFLOW\}\}/${{ github.workflow }}}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{EVENT_NAME\}\}/${{ github.event_name }}}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{BRANCH\}\}/${{ github.ref_name }}}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{ACTOR\}\}/${{ github.actor }}}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{RUN_ID\}\}/${{ github.run_id }}}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{SHA\}\}/${{ github.sha }}}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{REPORT_URL\}\}/${{ steps.deployment.outputs.page_url }}}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{WORKFLOW_URL\}\}/https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{TOTAL\}\}/${{ steps.allure_summary.outputs.total }}}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{PASSED\}\}/${{ steps.allure_summary.outputs.passed }}}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{FAILED\}\}/${{ steps.allure_summary.outputs.failed }}}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{BROKEN\}\}/${{ steps.allure_summary.outputs.broken }}}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{SKIPPED\}\}/${{ steps.allure_summary.outputs.skipped }}}"
+
           TOTAL=${{ steps.allure_summary.outputs.total }}
+
           PASSED=${{ steps.allure_summary.outputs.passed }}
+
           if [ "$TOTAL" -gt 0 ]; then
+
             PASS_PERCENT=$(( PASSED * 100 / TOTAL ))
+
           else
+
             PASS_PERCENT=0
+
           fi
+
           TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
 
+
+
           EMAIL_BODY="${EMAIL_BODY//\{\{TIMESTAMP\}\}/$TIMESTAMP}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{PASS_PERCENT\}\}/$PASS_PERCENT}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{BROWSER\}\}/chrome, firefox}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{JAVA_VERSION\}\}/17}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{RUNNER\}\}/${{ runner.os }}}"
+
           EMAIL_BODY="${EMAIL_BODY//\{\{FAILED_TESTS_TABLE\}\}/${{ steps.build_failed_table.outputs.failed_table }}}"
 
+
+
           {
+
             echo "content<<EOF"
+
             echo "$EMAIL_BODY"
+
             echo "EOF"
+
           } >> "$GITHUB_OUTPUT"
 
+
+
       - name: Send Email Notification
+
         uses: dawidd6/action-send-mail@v3
+
         if: always()
+
         with:
+
           server_address: smtp.gmail.com
+
           server_port: 465
+
           secure: true
+
           username: ${{ secrets.EMAIL_USERNAME }}
+
           password: ${{ secrets.EMAIL_PASSWORD }}
+
           subject: >-
+
             [${{ github.event_name }}]
+
             E2E Execution Completed - ${{ github.repository }}
+
           to: ${{ secrets.TO_EMAIL }}
+
           cc: ${{ secrets.EMAIL_USERNAME }}
+
           from: ${{ secrets.EMAIL_USERNAME }}
+
           html_body: ${{ steps.email_body.outputs.content }}
 
-      - name: Build Slack Failure Details
-        id: slack_failures
-        if: always()
-        run: |
-          LINES=""
-          for FILE in build/allure-results/*-result.json; do
-            STATUS=$(jq -r '.status // ""' "$FILE")
-            if [ "$STATUS" != "failed" ] && [ "$STATUS" != "broken" ]; then
-              continue
-            fi
-            NAME=$(jq -r '.name // "Unknown"' "$FILE")
-            MESSAGE=$(jq -r '.statusDetails.message // ""' "$FILE" | head -c 120)
-            TRACE=$(jq -r '.statusDetails.trace // ""' "$FILE")
-            ERROR_TYPE=$(echo "$TRACE" | head -1 | grep -oE '[A-Za-z][A-Za-z0-9_]*(Exception|Error|Failure)' | tail -1)
-            if [ -z "$ERROR_TYPE" ]; then
-              ERROR_TYPE=$(echo "$MESSAGE" | grep -oE '[A-Za-z][A-Za-z0-9_]*(Exception|Error|Failure)' | tail -1)
-            fi
-            if [ -z "$ERROR_TYPE" ]; then ERROR_TYPE="Unknown"; fi
-            if [ "$STATUS" = "failed" ]; then ICON=":red_circle:"; else ICON=":large_orange_circle:"; fi
-            LINES="${LINES}${ICON} *${NAME}*\n\`${ERROR_TYPE}\` ${MESSAGE}\n"
-          done
-          echo "lines<<SLACK_LINES_EOF" >> $GITHUB_OUTPUT
-          printf '%s' "$LINES" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "SLACK_LINES_EOF" >> $GITHUB_OUTPUT
+
+
+  notify:
+
+    if: always()
+
+    needs: publish-allure
+
+    runs-on: ubuntu-latest
+
+
+
+    steps:
+
+      - name: Download Chrome Results
+
+        uses: actions/download-artifact@v4
+
+        with:
+
+          name: allure-results-chrome
+
+          path: build/allure-results
+
+
+
+      - name: Download Firefox Results
+
+        uses: actions/download-artifact@v4
+
+        with:
+
+          name: allure-results-firefox
+
+          path: build/allure-results
+
+
 
       - name: Slack Summary
+
         if: always()
+
         env:
+
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
         run: |
-          TOTAL="${{ steps.allure_summary.outputs.total }}"
-          PASSED="${{ steps.allure_summary.outputs.passed }}"
-          FAILED="${{ steps.allure_summary.outputs.failed }}"
-          BROKEN="${{ steps.allure_summary.outputs.broken }}"
-          SKIPPED="${{ steps.allure_summary.outputs.skipped }}"
+
+          TOTAL="${{ needs.publish-allure.outputs.total }}"
+
+          PASSED="${{ needs.publish-allure.outputs.passed }}"
+
+          FAILED="${{ needs.publish-allure.outputs.failed }}"
+
+          BROKEN="${{ needs.publish-allure.outputs.broken }}"
+
+          SKIPPED="${{ needs.publish-allure.outputs.skipped }}"
+
+          REPORT_URL="${{ needs.publish-allure.outputs.report_url }}"
+
           if [ "$TOTAL" -gt 0 ]; then PASS_PCT=$(( PASSED * 100 / TOTAL )); else PASS_PCT=0; fi
+
           if [ "$FAILED" = "0" ] && [ "$BROKEN" = "0" ]; then
+
             STATUS_ICON=":white_check_mark:"; STATUS_TEXT="All tests passed"; COLOR="#22c55e"
+
           else
+
             STATUS_ICON=":x:"; STATUS_TEXT="Some tests failed"; COLOR="#ef4444"
+
           fi
-          cat > /tmp/slack_summary.json <<JSON
-          {
-            "attachments": [{
-              "color": "${COLOR}",
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": { "type": "plain_text", "text": "E2E Test Execution Completed", "emoji": true }
-                },
-                {
-                  "type": "section",
-                  "text": { "type": "mrkdwn", "text": "${STATUS_ICON} *${STATUS_TEXT}* — ${PASS_PCT}% pass rate" }
-                },
-                { "type": "divider" },
-                {
-                  "type": "section",
-                  "fields": [
-                    { "type": "mrkdwn", "text": "*Total*\n${TOTAL}" },
-                    { "type": "mrkdwn", "text": "*Passed*\n:large_green_circle: ${PASSED}" },
-                    { "type": "mrkdwn", "text": "*Failed*\n:red_circle: ${FAILED}" },
-                    { "type": "mrkdwn", "text": "*Broken*\n:large_orange_circle: ${BROKEN}" },
-                    { "type": "mrkdwn", "text": "*Skipped*\n:white_circle: ${SKIPPED}" },
-                    { "type": "mrkdwn", "text": "*Trigger*\n${{ github.event_name }}" }
-                  ]
-                },
-                { "type": "divider" },
-                {
-                  "type": "section",
-                  "fields": [
-                    { "type": "mrkdwn", "text": "*Repo*\n${{ github.repository }}" },
-                    { "type": "mrkdwn", "text": "*Branch*\n${{ github.ref_name }}" },
-                    { "type": "mrkdwn", "text": "*Actor*\n${{ github.actor }}" },
-                    { "type": "mrkdwn", "text": "*Run ID*\n${{ github.run_id }}" }
-                  ]
-                },
-                {
-                  "type": "actions",
-                  "elements": [
-                    {
-                      "type": "button",
-                      "text": { "type": "plain_text", "text": "Allure Report", "emoji": true },
-                      "url": "${{ steps.deployment.outputs.page_url }}",
-                      "style": "primary"
-                    },
-                    {
-                      "type": "button",
-                      "text": { "type": "plain_text", "text": "Workflow Run", "emoji": true },
-                      "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                    }
-                  ]
-                }
-              ]
-            }]
-          }
-          JSON
+
+          jq -n \
+
+            --arg color "$COLOR" \
+
+            --arg status "${STATUS_ICON} *${STATUS_TEXT}* — ${PASS_PCT}% pass rate" \
+
+            --arg total "$TOTAL" --arg passed "$PASSED" --arg failed "$FAILED" \
+
+            --arg broken "$BROKEN" --arg skipped "$SKIPPED" \
+
+            --arg trigger "${{ github.event_name }}" \
+
+            --arg repo "${{ github.repository }}" \
+
+            --arg branch "${{ github.ref_name }}" \
+
+            --arg actor "${{ github.actor }}" \
+
+            --arg run_id "${{ github.run_id }}" \
+
+            --arg report_url "$REPORT_URL" \
+
+            --arg workflow_url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+
+            '{
+
+              attachments: [{
+
+                color: $color,
+
+                blocks: [
+
+                  { type: "header", text: { type: "plain_text", text: "E2E Test Execution Completed", emoji: true } },
+
+                  { type: "section", text: { type: "mrkdwn", text: $status } },
+
+                  { type: "divider" },
+
+                  { type: "section", fields: [
+
+                    { type: "mrkdwn", text: ("*Total*\n" + $total) },
+
+                    { type: "mrkdwn", text: ("*Passed*\n:large_green_circle: " + $passed) },
+
+                    { type: "mrkdwn", text: ("*Failed*\n:red_circle: " + $failed) },
+
+                    { type: "mrkdwn", text: ("*Broken*\n:large_orange_circle: " + $broken) },
+
+                    { type: "mrkdwn", text: ("*Skipped*\n:white_circle: " + $skipped) },
+
+                    { type: "mrkdwn", text: ("*Trigger*\n" + $trigger) }
+
+                  ]},
+
+                  { type: "divider" },
+
+                  { type: "section", fields: [
+
+                    { type: "mrkdwn", text: ("*Repo*\n" + $repo) },
+
+                    { type: "mrkdwn", text: ("*Branch*\n" + $branch) },
+
+                    { type: "mrkdwn", text: ("*Actor*\n" + $actor) },
+
+                    { type: "mrkdwn", text: ("*Run ID*\n" + $run_id) }
+
+                  ]},
+
+                  { type: "actions", elements: [
+
+                    { type: "button", text: { type: "plain_text", text: "Allure Report", emoji: true }, url: $report_url, style: "primary" },
+
+                    { type: "button", text: { type: "plain_text", text: "Workflow Run", emoji: true }, url: $workflow_url }
+
+                  ]}
+
+                ]
+
+              }]
+
+            }' > /tmp/slack_summary.json
+
           curl -s -X POST -H "Content-Type: application/json" -d @/tmp/slack_summary.json "$SLACK_WEBHOOK_URL"
 
+
+
       - name: Slack Failure Alert
-        if: ${{ always() && steps.allure_summary.outputs.failed != '0' }}
+
+        if: ${{ needs.publish-allure.outputs.failed != '0' }}
+
         env:
+
           SLACK_FAILURE_WEBHOOK_URL: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL }}
+
         run: |
-          FAILED="${{ steps.allure_summary.outputs.failed }}"
-          BROKEN="${{ steps.allure_summary.outputs.broken }}"
-          FAILURE_LINES="${{ steps.slack_failures.outputs.lines }}"
-          cat > /tmp/slack_failure.json <<JSON
-          {
-            "attachments": [{
-              "color": "#ef4444",
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": { "type": "plain_text", "text": "E2E Failure Alert", "emoji": true }
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    { "type": "mrkdwn", "text": "*Repo*\n${{ github.repository }}" },
-                    { "type": "mrkdwn", "text": "*Branch*\n${{ github.ref_name }}" },
-                    { "type": "mrkdwn", "text": "*Failed*\n:red_circle: ${FAILED}" },
-                    { "type": "mrkdwn", "text": "*Broken*\n:large_orange_circle: ${BROKEN}" }
-                  ]
-                },
-                { "type": "divider" },
-                {
-                  "type": "section",
-                  "text": { "type": "mrkdwn", "text": "*Failed Tests*\n${FAILURE_LINES}" }
-                },
-                { "type": "divider" },
-                {
-                  "type": "actions",
-                  "elements": [
-                    {
-                      "type": "button",
-                      "text": { "type": "plain_text", "text": "Allure Report", "emoji": true },
-                      "url": "${{ steps.deployment.outputs.page_url }}",
-                      "style": "danger"
-                    },
-                    {
-                      "type": "button",
-                      "text": { "type": "plain_text", "text": "Workflow Run", "emoji": true },
-                      "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                    }
-                  ]
-                }
-              ]
-            }]
-          }
-          JSON
+
+          FAILED="${{ needs.publish-allure.outputs.failed }}"
+
+          BROKEN="${{ needs.publish-allure.outputs.broken }}"
+
+          REPORT_URL="${{ needs.publish-allure.outputs.report_url }}"
+
+
+
+          FAIL_TEXT=""
+
+          for FILE in build/allure-results/*-result.json; do
+
+            STATUS=$(jq -r '.status // ""' "$FILE")
+
+            if [ "$STATUS" != "failed" ] && [ "$STATUS" != "broken" ]; then
+
+              continue
+
+            fi
+
+            NAME=$(jq -r '.name // "Unknown"' "$FILE")
+
+            MESSAGE=$(jq -r '.statusDetails.message // ""' "$FILE" | head -c 120)
+
+            TRACE=$(jq -r '.statusDetails.trace // ""' "$FILE")
+
+            ERROR_TYPE=$(echo "$TRACE" | head -1 | grep -oE '[A-Za-z][A-Za-z0-9_]*(Exception|Error|Failure)' | tail -1)
+
+            if [ -z "$ERROR_TYPE" ]; then
+
+              ERROR_TYPE=$(echo "$MESSAGE" | grep -oE '[A-Za-z][A-Za-z0-9_]*(Exception|Error|Failure)' | tail -1)
+
+            fi
+
+            if [ -z "$ERROR_TYPE" ]; then ERROR_TYPE="Unknown"; fi
+
+            if [ "$STATUS" = "failed" ]; then ICON=":red_circle:"; else ICON=":large_orange_circle:"; fi
+
+            FAIL_TEXT="${FAIL_TEXT}${ICON} *${NAME}* [${ERROR_TYPE}] ${MESSAGE}\n"
+
+          done
+
+
+
+          jq -n \
+
+            --arg failed "$FAILED" \
+
+            --arg broken "$BROKEN" \
+
+            --arg repo "${{ github.repository }}" \
+
+            --arg branch "${{ github.ref_name }}" \
+
+            --arg fail_text "$FAIL_TEXT" \
+
+            --arg report_url "$REPORT_URL" \
+
+            --arg workflow_url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+
+            '{
+
+              attachments: [{
+
+                color: "#ef4444",
+
+                blocks: [
+
+                  { type: "header", text: { type: "plain_text", text: "E2E Failure Alert", emoji: true } },
+
+                  { type: "section", fields: [
+
+                    { type: "mrkdwn", text: ("*Repo*\n" + $repo) },
+
+                    { type: "mrkdwn", text: ("*Branch*\n" + $branch) },
+
+                    { type: "mrkdwn", text: ("*Failed*\n:red_circle: " + $failed) },
+
+                    { type: "mrkdwn", text: ("*Broken*\n:large_orange_circle: " + $broken) }
+
+                  ]},
+
+                  { type: "divider" },
+
+                  { type: "section", text: { type: "mrkdwn", text: ("*Failed Tests*\n" + $fail_text) } },
+
+                  { type: "divider" },
+
+                  { type: "actions", elements: [
+
+                    { type: "button", text: { type: "plain_text", text: "Allure Report", emoji: true }, url: $report_url, style: "danger" },
+
+                    { type: "button", text: { type: "plain_text", text: "Workflow Run", emoji: true }, url: $workflow_url }
+
+                  ]}
+
+                ]
+
+              }]
+
+            }' > /tmp/slack_failure.json
+
           curl -s -X POST -H "Content-Type: application/json" -d @/tmp/slack_failure.json "$SLACK_FAILURE_WEBHOOK_URL"
