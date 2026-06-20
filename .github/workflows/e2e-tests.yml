@@ -201,6 +201,54 @@ jobs:
           echo "$TABLE" >> $GITHUB_OUTPUT
           echo "FAILED_TABLE_EOF" >> $GITHUB_OUTPUT
 
+      - name: Build Slack Failure Table
+        id: slack_failure_table
+        if: always()
+        run: |
+          TABLE=""
+      
+          for FILE in build/allure-results/*-result.json; do
+            STATUS=$(jq -r '.status // ""' "$FILE")
+      
+            if [ "$STATUS" != "failed" ] && [ "$STATUS" != "broken" ]; then
+              continue
+            fi
+      
+            NAME=$(jq -r '.name // "Unknown"' "$FILE")
+            TRACE=$(jq -r '.statusDetails.trace // ""' "$FILE")
+      
+            ERROR_TYPE=$(echo "$TRACE" | head -1 | grep -oE '[A-Za-z][A-Za-z0-9_]*(Exception|Error|Failure)' | tail -1)
+      
+            if [ -z "$ERROR_TYPE" ]; then
+              ERROR_TYPE="Unknown"
+            fi
+      
+            SHORT_NAME=$(echo "$NAME" | cut -c1-35)
+      
+            TABLE="${TABLE}$(printf '%-35s %-8s %s\n' "$SHORT_NAME" "$STATUS" "$ERROR_TYPE")"
+          done
+      
+          if [ -n "$TABLE" ]; then
+            HEADER=$(printf '%-35s %-8s %s\n' "Test Name" "Status" "Error")
+            SEPARATOR="----------------------------------------------------------------"
+      
+            {
+              echo "table<<EOF"
+              echo '```'
+              echo "$HEADER"
+              echo "$SEPARATOR"
+              echo "$TABLE"
+              echo '```'
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            {
+              echo "table<<EOF"
+              echo "No failed tests."
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Upload Allure HTML Report
         uses: actions/upload-artifact@v4
         with:
@@ -297,14 +345,67 @@ jobs:
               "text":"🚀 E2E Execution Completed\n\nRepository: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nTrigger: ${{ github.event_name }}\n\nTotal: ${{ steps.allure_summary.outputs.total }}\nPassed: ${{ steps.allure_summary.outputs.passed }}\nFailed: ${{ steps.allure_summary.outputs.failed }}\nBroken: ${{ steps.allure_summary.outputs.broken }}\nSkipped: ${{ steps.allure_summary.outputs.skipped }}\n\n📊 Report: ${{ steps.deployment.outputs.page_url }}\n🔗 Workflow: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             }' \
             "$SLACK_WEBHOOK_URL"
+
       - name: Slack Failure Alert
-        if: ${{ always() && steps.allure_summary.outputs.failed != '0' }}
+        if: ${{ always() && (steps.allure_summary.outputs.failed != '0' || steps.allure_summary.outputs.broken != '0') }}
         env:
           SLACK_FAILURE_WEBHOOK_URL: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL }}
         run: |
           curl -X POST \
             -H "Content-Type: application/json" \
-            --data '{
-              "text":"🚨 E2E FAILURE ALERT\n\nRepository: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nFailed Tests: ${{ steps.allure_summary.outputs.failed }}\n\n📊 Report: ${{ steps.deployment.outputs.page_url }}\n🔗 Workflow: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            }' \
+            --data "$(jq -n \
+              --arg repo "${{ github.repository }}" \
+              --arg branch "${{ github.ref_name }}" \
+              --arg failed "${{ steps.allure_summary.outputs.failed }}" \
+              --arg broken "${{ steps.allure_summary.outputs.broken }}" \
+              --arg table "${{ steps.slack_failure_table.outputs.table }}" \
+              --arg report "${{ steps.deployment.outputs.page_url }}" \
+              --arg workflow "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              '{
+                blocks: [
+                  {
+                    type: "header",
+                    text: {
+                      type: "plain_text",
+                      text: "🚨 E2E FAILURE ALERT"
+                    }
+                  },
+                  {
+                    type: "section",
+                    fields: [
+                      {
+                        type: "mrkdwn",
+                        text: ("*Repository:*\n" + $repo)
+                      },
+                      {
+                        type: "mrkdwn",
+                        text: ("*Branch:*\n" + $branch)
+                      },
+                      {
+                        type: "mrkdwn",
+                        text: ("*Failed:*\n" + $failed)
+                      },
+                      {
+                        type: "mrkdwn",
+                        text: ("*Broken:*\n" + $broken)
+                      }
+                    ]
+                  },
+                  {
+                    type: "section",
+                    text: {
+                      type: "mrkdwn",
+                      text: ("*Failed Tests:*\n" + $table)
+                    }
+                  },
+                  {
+                    type: "section",
+                    text: {
+                      type: "mrkdwn",
+                      text: ("📊 <" + $report + "|Allure Report>\n🔗 <" + $workflow + "|Workflow Run>")
+                    }
+                  }
+                ]
+              }'
+            )" \
             "$SLACK_FAILURE_WEBHOOK_URL"
