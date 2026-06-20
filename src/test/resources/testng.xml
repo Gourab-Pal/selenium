@@ -2,6 +2,7 @@
 <suite name="E2E Suite on Swag Lab" parallel="methods" thread-count="2" verbose="1">
     <listeners>
         <listener class-name="org.example.listeners.BrowserAwareAllureListeners"/>
+        <listener class-name="org.example.listeners.RetryListener"/>
     </listeners>
     <test name="E2E Tests">
         <classes>
