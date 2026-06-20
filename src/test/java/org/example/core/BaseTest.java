@@ -50,6 +50,10 @@ public abstract class BaseTest {
     @Step("Teardown & Log Result")
     @AfterMethod
     public void tearDownDriver(ITestResult result) {
+        if (result.wasRetried()) {
+            DriverManager.quitDriver();
+            return;
+        }
         long endTime = System.currentTimeMillis();
         long duration = endTime - testStartTime;
         String status;

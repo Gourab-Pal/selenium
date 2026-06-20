@@ -54,4 +54,8 @@ public final class TestConfig {
         }
         return PROPERTIES.getProperty(propertyKey, defaultValue);
     }
+
+    public static int getMaxRetryCount() {
+        return Integer.parseInt(PROPERTIES.getProperty("max.retry.count", "1"));
+    }
 }

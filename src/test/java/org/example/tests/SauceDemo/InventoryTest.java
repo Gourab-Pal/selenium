@@ -10,8 +10,6 @@ import org.example.pages.saucedemo.InventoryPage;
 import org.example.pages.saucedemo.LoginPage;
 import org.testng.annotations.Test;
 
-import java.util.NoSuchElementException;
-
 @Epic("Swag Lab Site")
 @Feature("Sauce Demo Login")
 public class InventoryTest extends BaseTest {
