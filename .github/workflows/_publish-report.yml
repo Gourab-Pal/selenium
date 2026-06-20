@@ -3,12 +3,18 @@ name: Publish Report
 on:
   workflow_call:
     outputs:
-      total:      { value: ${{ jobs.publish.outputs.total }} }
-      passed:     { value: ${{ jobs.publish.outputs.passed }} }
-      failed:     { value: ${{ jobs.publish.outputs.failed }} }
-      broken:     { value: ${{ jobs.publish.outputs.broken }} }
-      skipped:    { value: ${{ jobs.publish.outputs.skipped }} }
-      report_url: { value: ${{ jobs.publish.outputs.report_url }} }
+      total:
+        value: ${{ jobs.publish.outputs.total }}
+      passed:
+        value: ${{ jobs.publish.outputs.passed }}
+      failed:
+        value: ${{ jobs.publish.outputs.failed }}
+      broken:
+        value: ${{ jobs.publish.outputs.broken }}
+      skipped:
+        value: ${{ jobs.publish.outputs.skipped }}
+      report_url:
+        value: ${{ jobs.publish.outputs.report_url }}
 
 jobs:
   publish:
@@ -189,7 +195,7 @@ jobs:
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: >-
-            [${{ github.event_name }}
+            [${{ github.event_name }}]
             E2E Execution Completed - ${{ github.repository }}
           to: ${{ secrets.TO_EMAIL }}
           cc: ${{ secrets.EMAIL_USERNAME }}
