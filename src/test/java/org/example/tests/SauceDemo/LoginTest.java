@@ -11,6 +11,8 @@ import org.example.pages.saucedemo.LoginPage;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.NoSuchElementException;
+
 @Epic("Swag Lab Site")
 @Feature("Sauce Demo Login")
 public class LoginTest extends BaseTest {
@@ -21,5 +23,6 @@ public class LoginTest extends BaseTest {
     public void shouldLoginWithStandardUser() {
         InventoryPage inventoryPage = new LoginPage().loginAs("standard_user", "secret_sauce");
         inventoryPage.isInventoryPageLoaded();
+        throw new NoSuchElementException("test element not found in DOM");
     }
 }
