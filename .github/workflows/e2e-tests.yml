@@ -643,42 +643,23 @@ jobs:
           fi
           
           jq -n \
-          
             --arg color "$COLOR" \
-          
             --arg status "${STATUS_ICON} *${STATUS_TEXT}* — ${PASS_PCT}% pass rate" \
-          
             --arg total "$TOTAL" \
-          
             --arg passed "$PASSED" \
-          
             --arg failed "$FAILED" \
-          
             --arg broken "$BROKEN" \
-          
             --arg skipped "$SKIPPED" \
-          
             --arg trigger "${{ github.event_name }}" \
-          
             --arg repo "${{ github.repository }}" \
-          
             --arg branch "${{ github.ref_name }}" \
-          
             --arg actor "${{ github.actor }}" \
-          
             --arg run_id "${{ github.run_id }}" \
-          
             --arg report_url "$REPORT_URL" \
-          
             --arg workflow_url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-          
             '{"attachments":[{"color":$color,"blocks":[{"type":"header","text":{"type":"plain_text","text":"E2E Test Execution Completed","emoji":true}},{"type":"section","text":{"type":"mrkdwn","text":$status}},{"type":"divider"},{"type":"section","fields":[{"type":"mrkdwn","text":("*Total*\n"+$total)},{"type":"mrkdwn","text":("*Passed*\n:large_green_circle: "+$passed)},{"type":"mrkdwn","text":("*Failed*\n:red_circle: "+$failed)},{"type":"mrkdwn","text":("*Broken*\n:large_orange_circle: "+$broken)},{"type":"mrkdwn","text":("*Skipped*\n:white_circle: "+$skipped)},{"type":"mrkdwn","text":("*Trigger*\n"+$trigger)}]},{"type":"divider"},{"type":"section","fields":[{"type":"mrkdwn","text":("*Repo*\n"+$repo)},{"type":"mrkdwn","text":("*Branch*\n"+$branch)},{"type":"mrkdwn","text":("*Actor*\n"+$actor)},{"type":"mrkdwn","text":("*Run ID*\n"+$run_id)}]},{"type":"actions","elements":[{"type":"button","text":{"type":"plain_text","text":"Allure Report","emoji":true},"url":$report_url,"style":"primary"},{"type":"button","text":{"type":"plain_text","text":"Workflow Run","emoji":true},"url":$workflow_url}]}]}]}' \
-          
             > /tmp/slack_summary.json
-          
           curl -s -X POST -H "Content-Type: application/json" -d @/tmp/slack_summary.json "$SLACK_WEBHOOK_URL"
-
-
 
       - name: Slack Failure Alert
 
@@ -695,8 +676,6 @@ jobs:
           BROKEN="${{ needs.publish-allure.outputs.broken }}"
           
           REPORT_URL="${{ needs.publish-allure.outputs.report_url }}"
-          
-          
           
           FAIL_TEXT=""
           
@@ -732,26 +711,14 @@ jobs:
           
           done
           
-          
-          
           jq -n \
-          
             --arg failed "$FAILED" \
-          
             --arg broken "$BROKEN" \
-          
             --arg repo "${{ github.repository }}" \
-          
             --arg branch "${{ github.ref_name }}" \
-          
             --arg fail_text "$FAIL_TEXT" \
-          
             --arg report_url "$REPORT_URL" \
-          
             --arg workflow_url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-          
             '{"attachments":[{"color":"#ef4444","blocks":[{"type":"header","text":{"type":"plain_text","text":"E2E Failure Alert","emoji":true}},{"type":"section","fields":[{"type":"mrkdwn","text":("*Repo*\n"+$repo)},{"type":"mrkdwn","text":("*Branch*\n"+$branch)},{"type":"mrkdwn","text":("*Failed*\n:red_circle: "+$failed)},{"type":"mrkdwn","text":("*Broken*\n:large_orange_circle: "+$broken)}]},{"type":"divider"},{"type":"section","text":{"type":"mrkdwn","text":("*Failed Tests*\n"+$fail_text)}},{"type":"divider"},{"type":"actions","elements":[{"type":"button","text":{"type":"plain_text","text":"Allure Report","emoji":true},"url":$report_url,"style":"danger"},{"type":"button","text":{"type":"plain_text","text":"Workflow Run","emoji":true},"url":$workflow_url}]}]}]}' \
-          
             > /tmp/slack_failure.json
-          
           curl -s -X POST -H "Content-Type: application/json" -d @/tmp/slack_failure.json "$SLACK_FAILURE_WEBHOOK_URL"
