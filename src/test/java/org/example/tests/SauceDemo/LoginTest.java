@@ -8,6 +8,7 @@ import io.qameta.allure.Story;
 import org.example.core.BaseTest;
 import org.example.pages.saucedemo.InventoryPage;
 import org.example.pages.saucedemo.LoginPage;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Epic("Swag Lab Site")
@@ -20,6 +21,6 @@ public class LoginTest extends BaseTest {
     public void shouldLoginWithStandardUser() {
         InventoryPage inventoryPage = new LoginPage().loginAs("standard_user", "secret_sauce");
         inventoryPage.isInventoryPageLoaded();
-        throw new RuntimeException("run time error");
+        Assert.fail("gp failure");
     }
 }
