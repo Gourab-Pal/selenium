@@ -10,7 +10,7 @@ import org.example.pages.saucedemo.InventoryPage;
 import org.example.pages.saucedemo.LoginPage;
 import org.testng.annotations.Test;
 
-@Epic("Swag Lab Site")
+@Epic("Swag Lab Website")
 @Feature("Sauce Demo Login")
 public class LoginTest extends BaseTest {
 
