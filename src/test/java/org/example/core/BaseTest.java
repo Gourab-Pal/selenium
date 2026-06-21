@@ -10,6 +10,7 @@ import org.example.db.TestRunContext;
 import org.example.db.TestRunService;
 import org.example.db.SupabaseDB;
 import org.example.listeners.BrowserAwareAllureListeners;
+import org.example.listeners.RetryAnalyzer;
 import org.example.utils.AllureLogger;
 import org.example.utils.BrowserVersionUtils;
 import org.example.utils.ScreenshotUtils;
@@ -94,6 +95,8 @@ public abstract class BaseTest {
             attachFailureArtifacts();
         }
 
+        int retryCount = RetryAnalyzer.getRetryCount(result);
+
         // =========================
         // INSERT TEST CASE RESULT
         // =========================
@@ -110,7 +113,8 @@ public abstract class BaseTest {
                 BrowserVersionUtils.getBrowserVersion(),
                 System.getenv().getOrDefault("ENVIRONMENT", "local_ide"),
                 testStartTime,
-                endTime
+                endTime,
+                retryCount
         );
 
         if (driver != null) {
