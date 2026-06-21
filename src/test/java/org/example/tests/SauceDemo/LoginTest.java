@@ -18,7 +18,8 @@ public class LoginTest extends BaseTest {
     @Story("Standard user can log in")
     @Severity(SeverityLevel.CRITICAL)
     public void shouldLoginWithStandardUser() {
-        InventoryPage inventoryPage = new LoginPage().loginAs("standard_user", "secret_sauce");
+        InventoryPage inventoryPage = new LoginPage()
+                .loginAs(System.getenv("SAUCEDEMO_USERNAME"), System.getenv("SAUCEDEMO_PASSWORD"));
         inventoryPage.isInventoryPageLoaded();
     }
 }
