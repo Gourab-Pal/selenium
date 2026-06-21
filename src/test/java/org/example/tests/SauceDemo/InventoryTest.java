@@ -18,7 +18,8 @@ public class InventoryTest extends BaseTest {
     @Story("Sidenav should load")
     @Severity(SeverityLevel.NORMAL)
     public void sidebarLinksShouldVisible() {
-        InventoryPage inventoryPage = new LoginPage().loginAs("standard_user", "secret_sauce");
+        InventoryPage inventoryPage = new LoginPage()
+                .loginAs(System.getenv("SAUCEDEMO_USERNAME"), System.getenv("SAUCEDEMO_PASSWORD"));
         inventoryPage.validateAllOptionsInSidenav();
     }
 }
