@@ -2,7 +2,6 @@ package org.example.db;
 
 import io.qameta.allure.Step;
 import org.example.utils.AllureLogger;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.UUID;
@@ -23,7 +22,8 @@ public class TestCaseResultService {
             String browserVersion,
             String environment,
             long startedAt,
-            long endedAt
+            long endedAt,
+            int retryCount
     ) {
 
         String sql = """
@@ -42,9 +42,10 @@ public class TestCaseResultService {
                 environment,
                 started_at,
                 ended_at,
-                created_at
+                created_at,
+                retry_count
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, now())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, now(), ?)
         """;
 
         try (Connection conn = SupabaseDB.getConnection();
@@ -64,6 +65,7 @@ public class TestCaseResultService {
             stmt.setString(12, environment);
             stmt.setTimestamp(13, new java.sql.Timestamp(startedAt));
             stmt.setTimestamp(14, new java.sql.Timestamp(endedAt));
+            stmt.setInt(15, retryCount);
 
             stmt.executeUpdate();
             AllureLogger.log("test_case_result db insert is done");
