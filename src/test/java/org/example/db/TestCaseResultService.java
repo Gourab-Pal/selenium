@@ -1,6 +1,7 @@
 package org.example.db;
 
 import io.qameta.allure.Step;
+import org.example.config.TestConfig;
 import org.example.utils.AllureLogger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -8,7 +9,7 @@ import java.util.UUID;
 
 public class TestCaseResultService {
 
-    @Step("Updating test_case_result database...")
+    @Step("Updating database with test case results...")
     public static void insertTestCaseResult(
             UUID testRunId,
             String testClass,
@@ -27,7 +28,7 @@ public class TestCaseResultService {
     ) {
 
         String sql = """
-            INSERT INTO test_case_result (
+            INSERT INTO %s (
                 id,
                 test_run_id,
                 test_class,
@@ -46,7 +47,7 @@ public class TestCaseResultService {
                 retry_count
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, now(), ?)
-        """;
+        """.formatted(TestConfig.getTestCaseResultTableName());
 
         try (Connection conn = SupabaseDB.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -68,10 +69,10 @@ public class TestCaseResultService {
             stmt.setInt(15, retryCount);
 
             stmt.executeUpdate();
-            AllureLogger.log("test_case_result db insert is done");
+            AllureLogger.log("Db insert is done with test case result");
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to insert test case result", e);
+            throw new RuntimeException("Failed to insert test case result in db", e);
         }
     }
 }

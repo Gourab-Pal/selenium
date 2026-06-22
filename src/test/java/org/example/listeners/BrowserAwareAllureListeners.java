@@ -1,12 +1,10 @@
 package org.example.listeners;
 
 import io.qameta.allure.Allure;
-import io.qameta.allure.testng.AllureTestNg;
 import org.example.config.TestConfig;
 import org.example.utils.BrowserVersionUtils;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
-
 
 public class BrowserAwareAllureListeners implements ITestListener {
     @Override
