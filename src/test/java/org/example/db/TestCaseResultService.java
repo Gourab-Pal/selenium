@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public class TestCaseResultService {
 
-    @Step("Updating test_case_result database...")
+    @Step("Updating database with test case results...")
     public static void insertTestCaseResult(
             UUID testRunId,
             String testClass,
@@ -69,10 +69,10 @@ public class TestCaseResultService {
             stmt.setInt(15, retryCount);
 
             stmt.executeUpdate();
-            AllureLogger.log("test_case_result db insert is done");
+            AllureLogger.log("Db insert is done with test case result");
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to insert test case result", e);
+            throw new RuntimeException("Failed to insert test case result in db", e);
         }
     }
 }

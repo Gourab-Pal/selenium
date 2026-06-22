@@ -12,7 +12,7 @@ public class SupabaseDB {
     private static final String USER = System.getenv("SUPABASE_DB_USER");
     private static final String PASSWORD = System.getenv("SUPABASE_DB_PASSWORD");
 
-    @Step("Establishing Superbase database connection")
+    @Step("Establishing Supabase database connection")
     public static Connection getConnection() {
         try {
             if (connection == null || connection.isClosed()) {

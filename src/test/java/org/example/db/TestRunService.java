@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public class TestRunService {
 
-    @Step("Updating test_run database with suite level details...")
+    @Step("Updating database with suite level details...")
     public static String createTestRun() {
 
         String testRunId = UUID.randomUUID().toString();
@@ -51,7 +51,7 @@ public class TestRunService {
             stmt.setLong(10, 0);
 
             stmt.executeUpdate();
-            AllureLogger.log("Entries inserted into test_run table");
+            AllureLogger.log("Entries inserted into db table with suite level details");
 
             return testRunId;
 
@@ -61,7 +61,7 @@ public class TestRunService {
         }
     }
 
-    @Step("Updating pass fail count in test_run database...")
+    @Step("Updating pass fail count in suite level table database...")
     public static Map<String, Integer> getTestRunSummary(String testRunId) {
 
         String sql = """
@@ -69,9 +69,9 @@ public class TestRunService {
             COUNT(*) AS total_tests,
             COUNT(*) FILTER (WHERE status = 'PASSED') AS passed_tests,
             COUNT(*) FILTER (WHERE status = 'FAILED') AS failed_tests
-        FROM test_case_result
+        FROM %s
         WHERE test_run_id = ?
-    """;
+    """.formatted(TestConfig.getTestCaseResultTableName());
 
         try (Connection conn = SupabaseDB.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -92,7 +92,7 @@ public class TestRunService {
             throw new RuntimeException("Failed to fetch test summary", e);
         }
 
-        AllureLogger.log("Entries updated into test_run table");
+        AllureLogger.log("Entries updated into suite level table");
 
         return Map.of("total", 0, "passed", 0, "failed", 0);
     }
