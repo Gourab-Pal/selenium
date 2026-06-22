@@ -21,6 +21,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
 
@@ -54,37 +55,15 @@ public abstract class BaseTest {
         }
         long endTime = System.currentTimeMillis();
         long duration = endTime - testStartTime;
-        String status;
-        Throwable throwable = result.getThrowable();
-//        switch (result.getStatus()) {
-//            case ITestResult.SUCCESS:
-//                status = "PASSED";
-//                break;
-//            case ITestResult.FAILURE:
-//                status = "FAILED";
-//                break;
-//            case ITestResult.SKIP:
-//                status = "SKIPPED";
-//                break;
-//            default:
-//                status = "PARTIAL";
-//        }
-        status = BaseTestUtils.getTestCaseStatus(result);
-
-        String errorMessage = null;
-        String stackTrace = null;
+        String status = BaseTestUtils.getTestCaseStatus(result);
+        ArrayList<String> errorDetails = BaseTestUtils.getErrorDetails(result);
+        String errorMessage = errorDetails.get(0);
+        String stackTrace = errorDetails.get(1);
         String screenshotPath = null;
-
-        if (throwable != null) {
-            errorMessage = throwable.getMessage();
-            StringWriter sw = new StringWriter();
-            throwable.printStackTrace(new PrintWriter(sw));
-            stackTrace = sw.toString();
-        }
 
         if (driver != null && result.getStatus() == ITestResult.FAILURE) {
             screenshotPath = ScreenshotUtils.saveScreenshot(driver, result.getMethod().getMethodName());
-            attachFailureArtifacts();
+            BaseTestUtils.attachFailureArtifacts(driver);
         }
 
         int retryCount = RetryAnalyzer.getRetryCount(result);
@@ -113,23 +92,6 @@ public abstract class BaseTest {
             DriverManager.quitDriver();
         }
     }
-
-    // =========================
-    // FAILURE ARTIFACTS
-    // =========================
-    private void attachFailureArtifacts() {
-        try {
-            attachScreenshot(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES));
-            attachPageSource(driver.getPageSource());
-        }
-        catch (Exception ignored) {}
-    }
-
-    @Attachment(value = "Screenshot", type = "image/png")
-    protected byte[] attachScreenshot(byte[] screenshot) {return screenshot;}
-
-    @Attachment(value = "Page Source", type = "text/html")
-    protected String attachPageSource(String pageSource) {return pageSource;}
 
     // =========================
     // AFTER SUITE

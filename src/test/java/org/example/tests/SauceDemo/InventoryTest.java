@@ -8,6 +8,7 @@ import io.qameta.allure.Story;
 import org.example.core.BaseTest;
 import org.example.pages.saucedemo.InventoryPage;
 import org.example.pages.saucedemo.LoginPage;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Epic("Swag Lab Site")
@@ -20,6 +21,7 @@ public class InventoryTest extends BaseTest {
     public void sidebarLinksShouldVisible() {
         InventoryPage inventoryPage = new LoginPage()
                 .loginAs(System.getenv("SAUCEDEMO_USERNAME"), System.getenv("SAUCEDEMO_PASSWORD"));
+        Assert.fail("testing");
         inventoryPage.validateAllOptionsInSidenav();
     }
 }
