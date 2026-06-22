@@ -5,9 +5,7 @@ import java.io.InputStream;
 import java.util.Properties;
 
 public final class TestConfig {
-
     private static final Properties PROPERTIES = new Properties();
-
     static {
         try (InputStream input = TestConfig.class.getClassLoader().getResourceAsStream("config.properties")) {
             if (input == null) {
@@ -19,8 +17,7 @@ public final class TestConfig {
         }
     }
 
-    private TestConfig() {
-    }
+    private TestConfig() {}
 
     public static String getBrowser() {
         return envOrProperty("BROWSER", "browser", "chrome");
