@@ -7,13 +7,10 @@ import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
-
 import java.time.Duration;
 
 public final class BrowserFactory {
-
-    private BrowserFactory() {
-    }
+    private BrowserFactory() {}
 
     public static WebDriver createDriver() {
         WebDriver driver = switch (TestConfig.getBrowser().toLowerCase()) {
@@ -21,7 +18,6 @@ public final class BrowserFactory {
             case "edge" -> new EdgeDriver(buildEdgeOptions());
             default -> new ChromeDriver(buildChromeOptions());
         };
-
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(TestConfig.getImplicitWaitSeconds()));
         driver.manage().window().maximize();
         return driver;

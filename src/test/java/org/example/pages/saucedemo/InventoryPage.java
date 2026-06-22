@@ -2,12 +2,12 @@ package org.example.pages.saucedemo;
 
 import io.qameta.allure.Step;
 import org.example.pages.BasePage;
+import org.example.utils.AllureLogger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.testng.Assert;
 
 public class InventoryPage extends BasePage {
-
     private static final By INVENTORY_CONTAINER = By.id("inventory_container");
     private static final By PAGE_TITLE = By.cssSelector(".title");
     private static final By HAMBURGER_MENU_BTN = By.id("react-burger-menu-btn");
@@ -29,7 +29,7 @@ public class InventoryPage extends BasePage {
             waitForVisible(SIDENAV_CONTAINER_CLOSED_STATE);
         }
         catch (Exception ignored) {
-            System.out.println("Sidenav is already in opened state");
+            AllureLogger.log("Sidenav is already in opened state");
         }
     }
 
@@ -39,7 +39,7 @@ public class InventoryPage extends BasePage {
             waitForVisible(SIDENAV_CONTAINER_EXPANDED_STATE);
         }
         catch (Exception ignored) {
-            System.out.println("Sidenav is already in expanded state");
+            AllureLogger.log("Sidenav is already in expanded state");
         }
     }
 
@@ -61,7 +61,7 @@ public class InventoryPage extends BasePage {
                 waitForVisible(linkLocator);
                 actualLinkCount++;
             } catch (NoSuchElementException e) {
-                System.out.println("Element not visible in DOM: " + e.getMessage());
+                AllureLogger.log("Element not visible in DOM: " + e.getMessage());
             }
         }
         Assert.assertEquals(actualLinkCount, expectedLinkCount, "All expected links are not loaded in the DOM");

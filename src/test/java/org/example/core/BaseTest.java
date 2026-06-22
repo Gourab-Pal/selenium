@@ -1,17 +1,15 @@
 package org.example.core;
 
-import io.qameta.allure.Allure;
 import io.qameta.allure.Attachment;
 import io.qameta.allure.Step;
-import io.qameta.allure.testng.AllureTestNg;
 import org.example.config.TestConfig;
 import org.example.db.TestCaseResultService;
 import org.example.db.TestRunContext;
 import org.example.db.TestRunService;
 import org.example.db.SupabaseDB;
-import org.example.listeners.BrowserAwareAllureListeners;
 import org.example.listeners.RetryAnalyzer;
 import org.example.utils.AllureLogger;
+import org.example.utils.BaseTestUtils;
 import org.example.utils.BrowserVersionUtils;
 import org.example.utils.ScreenshotUtils;
 import org.openqa.selenium.OutputType;
@@ -43,7 +41,6 @@ public abstract class BaseTest {
     @BeforeMethod
     public void setUpDriver(ITestResult result) {
         testStartTime = System.currentTimeMillis();
-
         DriverManager.initDriver();
         driver = DriverManager.getDriver();
     }
@@ -59,19 +56,20 @@ public abstract class BaseTest {
         long duration = endTime - testStartTime;
         String status;
         Throwable throwable = result.getThrowable();
-        switch (result.getStatus()) {
-            case ITestResult.SUCCESS:
-                status = "PASSED";
-                break;
-            case ITestResult.FAILURE:
-                status = "FAILED";
-                break;
-            case ITestResult.SKIP:
-                status = "SKIPPED";
-                break;
-            default:
-                status = "PARTIAL";
-        }
+//        switch (result.getStatus()) {
+//            case ITestResult.SUCCESS:
+//                status = "PASSED";
+//                break;
+//            case ITestResult.FAILURE:
+//                status = "FAILED";
+//                break;
+//            case ITestResult.SKIP:
+//                status = "SKIPPED";
+//                break;
+//            default:
+//                status = "PARTIAL";
+//        }
+        status = BaseTestUtils.getTestCaseStatus(result);
 
         String errorMessage = null;
         String stackTrace = null;
@@ -79,19 +77,13 @@ public abstract class BaseTest {
 
         if (throwable != null) {
             errorMessage = throwable.getMessage();
-
             StringWriter sw = new StringWriter();
             throwable.printStackTrace(new PrintWriter(sw));
             stackTrace = sw.toString();
         }
 
         if (driver != null && result.getStatus() == ITestResult.FAILURE) {
-
-            screenshotPath = ScreenshotUtils.saveScreenshot(
-                    driver,
-                    result.getMethod().getMethodName()
-            );
-
+            screenshotPath = ScreenshotUtils.saveScreenshot(driver, result.getMethod().getMethodName());
             attachFailureArtifacts();
         }
 
@@ -123,25 +115,21 @@ public abstract class BaseTest {
     }
 
     // =========================
-// FAILURE ARTIFACTS
-// =========================
+    // FAILURE ARTIFACTS
+    // =========================
     private void attachFailureArtifacts() {
         try {
             attachScreenshot(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES));
             attachPageSource(driver.getPageSource());
-        } catch (Exception ignored) {
         }
+        catch (Exception ignored) {}
     }
 
     @Attachment(value = "Screenshot", type = "image/png")
-    protected byte[] attachScreenshot(byte[] screenshot) {
-        return screenshot;
-    }
+    protected byte[] attachScreenshot(byte[] screenshot) {return screenshot;}
 
     @Attachment(value = "Page Source", type = "text/html")
-    protected String attachPageSource(String pageSource) {
-        return pageSource;
-    }
+    protected String attachPageSource(String pageSource) {return pageSource;}
 
     // =========================
     // AFTER SUITE
@@ -183,9 +171,4 @@ public abstract class BaseTest {
             throw new RuntimeException("Failed to update test run summary: " + e.getMessage());
         }
     }
-
-    private boolean hasFailedTests() {
-        return false;
-    }
-
 }
