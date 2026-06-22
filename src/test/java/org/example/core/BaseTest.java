@@ -61,48 +61,46 @@ public abstract class BaseTest {
         String stackTrace = errorDetails.get(1);
         String screenshotPath = BaseTestUtils.getScreenshotPath(driver, result);
         int retryCount = RetryAnalyzer.getRetryCount(result);
-        BaseTestUtils.insertTestCaseResultIntoDatabase(result, duration, testStartTime, endTime, retryCount);
+        BaseTestUtils.insertTestCaseResultIntoDatabase(result, duration, testStartTime, endTime, retryCount, status, errorMessage, stackTrace, screenshotPath);
         if (driver != null) {DriverManager.quitDriver();}
     }
 
-    // =========================
-    // AFTER SUITE
-    // =========================
     @AfterSuite
     public void updateTestRunSummary() {
         long suiteEndTime = System.currentTimeMillis();
         long duration = suiteEndTime - suiteStartTime;
-        String runId = TestRunContext.getTestRunId();
-        Map<String, Integer> summary = TestRunService.getTestRunSummary(runId);
-        int total = summary.get("total");
-        int passed = summary.get("passed");
-        int failed = summary.get("failed");
-        String finalStatus = (failed > 0) ? "FAILED" : "PASSED";
-        String sql = """
-        UPDATE public.test_run
-        SET total_tests = ?,
-            passed_tests = ?,
-            failed_tests = ?,
-            duration_ms = ?,
-            status = ?
-        WHERE id = ?
-        """;
-
-        try (Connection conn = SupabaseDB.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, total);
-            stmt.setInt(2, passed);
-            stmt.setInt(3, failed);
-            stmt.setLong(4, duration);
-            stmt.setString(5, finalStatus);
-            stmt.setObject(6, UUID.fromString(runId));
-
-            stmt.executeUpdate();
-            AllureLogger.log("Test Run Updated Successfully");
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to update test run summary: " + e.getMessage());
-        }
+        BaseTestUtils.updateTestRunDatabase(duration);
+//        String runId = TestRunContext.getTestRunId();
+//        Map<String, Integer> summary = TestRunService.getTestRunSummary(runId);
+//        int total = summary.get("total");
+//        int passed = summary.get("passed");
+//        int failed = summary.get("failed");
+//        String finalStatus = (failed > 0) ? "FAILED" : "PASSED";
+//        String sql = """
+//        UPDATE public.test_run
+//        SET total_tests = ?,
+//            passed_tests = ?,
+//            failed_tests = ?,
+//            duration_ms = ?,
+//            status = ?
+//        WHERE id = ?
+//        """;
+//
+//        try (Connection conn = SupabaseDB.getConnection();
+//             PreparedStatement stmt = conn.prepareStatement(sql)) {
+//
+//            stmt.setInt(1, total);
+//            stmt.setInt(2, passed);
+//            stmt.setInt(3, failed);
+//            stmt.setLong(4, duration);
+//            stmt.setString(5, finalStatus);
+//            stmt.setObject(6, UUID.fromString(runId));
+//
+//            stmt.executeUpdate();
+//            AllureLogger.log("Test Run Updated Successfully");
+//
+//        } catch (Exception e) {
+//            throw new RuntimeException("Failed to update test run summary: " + e.getMessage());
+//        }
     }
 }

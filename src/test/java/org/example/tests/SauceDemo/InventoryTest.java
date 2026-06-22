@@ -21,7 +21,7 @@ public class InventoryTest extends BaseTest {
     public void sidebarLinksShouldVisible() {
         InventoryPage inventoryPage = new LoginPage()
                 .loginAs(System.getenv("SAUCEDEMO_USERNAME"), System.getenv("SAUCEDEMO_PASSWORD"));
-        Assert.fail("testing");
+        Assert.fail("automation failure testing");
         inventoryPage.validateAllOptionsInSidenav();
     }
 }

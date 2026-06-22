@@ -2,15 +2,20 @@ package org.example.utils;
 
 import io.qameta.allure.Attachment;
 import org.example.config.TestConfig;
+import org.example.db.SupabaseDB;
 import org.example.db.TestCaseResultService;
 import org.example.db.TestRunContext;
+import org.example.db.TestRunService;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.testng.ITestResult;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.UUID;
 
 public class BaseTestUtils {
@@ -73,7 +78,9 @@ public class BaseTestUtils {
         return screenshotPath;
     }
 
-    public static void insertTestCaseResultIntoDatabase(ITestResult result, long duration, long testStartTime, long endTime, int retryCount) {
+    public static void insertTestCaseResultIntoDatabase(ITestResult result, long duration, long testStartTime,
+                                                        long endTime, int retryCount, String status, String errorMessage,
+                                                        String stackTrace, String screenshotPath) {
         TestCaseResultService.insertTestCaseResult(
                 UUID.fromString(TestRunContext.getTestRunId()),
                 result.getTestClass().getName(),
@@ -90,6 +97,41 @@ public class BaseTestUtils {
                 endTime,
                 retryCount
         );
+    }
+
+    public static void updateTestRunDatabase(long duration) {
+        String runId = TestRunContext.getTestRunId();
+        Map<String, Integer> summary = TestRunService.getTestRunSummary(runId);
+        int total = summary.get("total");
+        int passed = summary.get("passed");
+        int failed = summary.get("failed");
+        String finalStatus = (failed > 0) ? "FAILED" : "PASSED";
+        String sql = """
+        UPDATE public.test_run
+        SET total_tests = ?,
+            passed_tests = ?,
+            failed_tests = ?,
+            duration_ms = ?,
+            status = ?
+        WHERE id = ?
+        """;
+
+        try (Connection conn = SupabaseDB.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, total);
+            stmt.setInt(2, passed);
+            stmt.setInt(3, failed);
+            stmt.setLong(4, duration);
+            stmt.setString(5, finalStatus);
+            stmt.setObject(6, UUID.fromString(runId));
+
+            stmt.executeUpdate();
+            AllureLogger.log("Test Run Updated Successfully");
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update test run summary: " + e.getMessage());
+        }
     }
 
 }
