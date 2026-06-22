@@ -1,6 +1,9 @@
 package org.example.utils;
 
 import io.qameta.allure.Attachment;
+import org.example.config.TestConfig;
+import org.example.db.TestCaseResultService;
+import org.example.db.TestRunContext;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
@@ -8,11 +11,13 @@ import org.testng.ITestResult;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class BaseTestUtils {
     public static String status;
     public static String errorMessage;
     public static String stackTrace;
+    public static String screenshotPath;
 
     public static String getTestCaseStatus(ITestResult result) {
         switch (result.getStatus()) {
@@ -58,6 +63,33 @@ public class BaseTestUtils {
         errorDetails.add(errorMessage);
         errorDetails.add(stackTrace);
         return errorDetails;
+    }
+
+    public static String getScreenshotPath(WebDriver driver, ITestResult result) {
+        if (driver != null && result.getStatus() == ITestResult.FAILURE) {
+            screenshotPath = ScreenshotUtils.saveScreenshot(driver, result.getMethod().getMethodName());
+            BaseTestUtils.attachFailureArtifacts(driver);
+        }
+        return screenshotPath;
+    }
+
+    public static void insertTestCaseResultIntoDatabase(ITestResult result, long duration, long testStartTime, long endTime, int retryCount) {
+        TestCaseResultService.insertTestCaseResult(
+                UUID.fromString(TestRunContext.getTestRunId()),
+                result.getTestClass().getName(),
+                result.getMethod().getMethodName(),
+                status,
+                duration,
+                errorMessage,
+                stackTrace,
+                screenshotPath,
+                TestConfig.getBrowser(),
+                BrowserVersionUtils.getBrowserVersion(),
+                System.getenv().getOrDefault("ENVIRONMENT", "local_ide"),
+                testStartTime,
+                endTime,
+                retryCount
+        );
     }
 
 }

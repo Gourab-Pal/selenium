@@ -59,38 +59,10 @@ public abstract class BaseTest {
         ArrayList<String> errorDetails = BaseTestUtils.getErrorDetails(result);
         String errorMessage = errorDetails.get(0);
         String stackTrace = errorDetails.get(1);
-        String screenshotPath = null;
-
-        if (driver != null && result.getStatus() == ITestResult.FAILURE) {
-            screenshotPath = ScreenshotUtils.saveScreenshot(driver, result.getMethod().getMethodName());
-            BaseTestUtils.attachFailureArtifacts(driver);
-        }
-
+        String screenshotPath = BaseTestUtils.getScreenshotPath(driver, result);
         int retryCount = RetryAnalyzer.getRetryCount(result);
-
-        // =========================
-        // INSERT TEST CASE RESULT
-        // =========================
-        TestCaseResultService.insertTestCaseResult(
-                UUID.fromString(TestRunContext.getTestRunId()),
-                result.getTestClass().getName(),
-                result.getMethod().getMethodName(),
-                status,
-                duration,
-                errorMessage,
-                stackTrace,
-                screenshotPath,
-                TestConfig.getBrowser(),
-                BrowserVersionUtils.getBrowserVersion(),
-                System.getenv().getOrDefault("ENVIRONMENT", "local_ide"),
-                testStartTime,
-                endTime,
-                retryCount
-        );
-
-        if (driver != null) {
-            DriverManager.quitDriver();
-        }
+        BaseTestUtils.insertTestCaseResultIntoDatabase(result, duration, testStartTime, endTime, retryCount);
+        if (driver != null) {DriverManager.quitDriver();}
     }
 
     // =========================
