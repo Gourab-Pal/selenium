@@ -1,6 +1,7 @@
 package org.example.db;
 
 import io.qameta.allure.Step;
+import org.example.config.TestConfig;
 import org.example.utils.AllureLogger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -27,7 +28,7 @@ public class TestCaseResultService {
     ) {
 
         String sql = """
-            INSERT INTO test_case_result (
+            INSERT INTO %s (
                 id,
                 test_run_id,
                 test_class,
@@ -46,7 +47,7 @@ public class TestCaseResultService {
                 retry_count
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, now(), ?)
-        """;
+        """.formatted(TestConfig.getTestCaseResultTableName());
 
         try (Connection conn = SupabaseDB.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {

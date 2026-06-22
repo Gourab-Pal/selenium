@@ -27,16 +27,16 @@ public class BaseTestUtils {
     public static String getTestCaseStatus(ITestResult result) {
         switch (result.getStatus()) {
             case ITestResult.SUCCESS:
-                status = "PASSED";
+                status = TestConfig.getPassedStatus();
                 break;
             case ITestResult.FAILURE:
-                status = "FAILED";
+                status = TestConfig.getFailedStatus();
                 break;
             case ITestResult.SKIP:
-                status = "SKIPPED";
+                status = TestConfig.getSkippedStatus();
                 break;
             default:
-                status = "PARTIAL";
+                status = TestConfig.getPartialStatus();
         }
         return status;
     }
@@ -92,7 +92,7 @@ public class BaseTestUtils {
                 screenshotPath,
                 TestConfig.getBrowser(),
                 BrowserVersionUtils.getBrowserVersion(),
-                System.getenv().getOrDefault("ENVIRONMENT", "local_ide"),
+                System.getenv().getOrDefault("ENVIRONMENT", TestConfig.getLocalEnv()),
                 testStartTime,
                 endTime,
                 retryCount
@@ -105,16 +105,16 @@ public class BaseTestUtils {
         int total = summary.get("total");
         int passed = summary.get("passed");
         int failed = summary.get("failed");
-        String finalStatus = (failed > 0) ? "FAILED" : "PASSED";
+        String finalStatus = (failed > 0) ? TestConfig.getFailedStatus() : TestConfig.getPassedStatus();
         String sql = """
-        UPDATE public.test_run
+        UPDATE %s
         SET total_tests = ?,
             passed_tests = ?,
             failed_tests = ?,
             duration_ms = ?,
             status = ?
         WHERE id = ?
-        """;
+        """.formatted(TestConfig.getTestRunTableName());
 
         try (Connection conn = SupabaseDB.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {

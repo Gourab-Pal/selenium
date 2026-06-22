@@ -1,8 +1,8 @@
 package org.example.db;
 
 import io.qameta.allure.Step;
+import org.example.config.TestConfig;
 import org.example.utils.AllureLogger;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,7 +18,7 @@ public class TestRunService {
         String testRunId = UUID.randomUUID().toString();
 
         String sql = """
-            INSERT INTO public.test_run (
+            INSERT INTO %s (
                 id,
                 project_name,
                 branch,
@@ -34,17 +34,17 @@ public class TestRunService {
                 created_at
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now(), now(), now())
-        """;
+        """.formatted(TestConfig.getTestRunTableName());
 
         try (Connection conn = SupabaseDB.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setObject(1, UUID.fromString(testRunId));
-            stmt.setString(2, "swaglab-tests");
-            stmt.setString(3, System.getenv().getOrDefault("BRANCH", "local"));
-            stmt.setString(4, System.getenv().getOrDefault("ENVIRONMENT", "local_ide"));
-            stmt.setString(5, System.getenv().getOrDefault("TRIGGERED_BY", "testng"));
-            stmt.setString(6, "PARTIAL");
+            stmt.setString(2, TestConfig.getProjectName());
+            stmt.setString(3, System.getenv().getOrDefault("BRANCH", TestConfig.getLocalBranch()));
+            stmt.setString(4, System.getenv().getOrDefault("ENVIRONMENT", TestConfig.getLocalEnv()));
+            stmt.setString(5, System.getenv().getOrDefault("TRIGGERED_BY", TestConfig.getLocalTrigger()));
+            stmt.setString(6, TestConfig.getPartialStatus());
             stmt.setInt(7, 0);
             stmt.setInt(8, 0);
             stmt.setInt(9, 0);
@@ -56,7 +56,7 @@ public class TestRunService {
             return testRunId;
 
         } catch (Exception e) {
-            e.printStackTrace();   // 🔥 show real PostgreSQL error
+            e.printStackTrace();
             throw new RuntimeException(e.getMessage(), e);
         }
     }

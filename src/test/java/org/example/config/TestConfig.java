@@ -55,4 +55,16 @@ public final class TestConfig {
     public static int getMaxRetryCount() {
         return Integer.parseInt(PROPERTIES.getProperty("max.retry.count", "1"));
     }
+
+    public static String getJdbcDriver() {return PROPERTIES.getProperty("jdbc.driver");}
+    public static String getTestRunTableName() {return PROPERTIES.getProperty("db.testrun");}
+    public static String getTestCaseResultTableName() {return PROPERTIES.getProperty("db.testcase.result");}
+    public static String getProjectName() {return PROPERTIES.getProperty("project.name");}
+    public static String getLocalBranch() {return PROPERTIES.getProperty("local.branch");}
+    public static String getLocalEnv() {return PROPERTIES.getProperty("local.env");}
+    public static String getLocalTrigger() {return PROPERTIES.getProperty("local.triggered.by");}
+    public static String getPartialStatus() {return PROPERTIES.getProperty("status.partial");}
+    public static String getPassedStatus() {return PROPERTIES.getProperty("status.passed");}
+    public static String getFailedStatus() {return PROPERTIES.getProperty("status.failed");}
+    public static String getSkippedStatus() {return PROPERTIES.getProperty("status.skipped");}
 }
