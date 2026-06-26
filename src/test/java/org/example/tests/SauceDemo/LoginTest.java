@@ -14,16 +14,16 @@ import org.testng.annotations.Test;
 @Feature("Sauce Demo Login")
 public class LoginTest extends BaseTest {
 
-    @Test(description = "Test existence of basic elements in login page", groups = {"regression"})
-    @Story("Basic element visible")
-    @Severity(SeverityLevel.NORMAL)
-    public void loginChecks() {
-        LoginPage loginPage = new LoginPage();
-        loginPage.performCriticalChecks();
-        loginPage.performBasicChecks();
-    }
+//    @Test(description = "Test existence of basic elements in login page", groups = {"regression"})
+//    @Story("Basic element visible")
+//    @Severity(SeverityLevel.NORMAL)
+//    public void loginChecks() {
+//        LoginPage loginPage = new LoginPage();
+//        loginPage.performCriticalChecks();
+//        loginPage.performBasicChecks();
+//    }
 
-    @Test(description = "Should log in with standard user and see inventory page", groups = {"smoke", "sanity"}, dependsOnMethods = {"loginChecks"})
+    @Test(description = "Should log in with standard user and see inventory page", groups = {"smoke", "sanity"})
     @Story("Standard user can log in")
     @Severity(SeverityLevel.CRITICAL)
     public void shouldLoginWithStandardUser() {

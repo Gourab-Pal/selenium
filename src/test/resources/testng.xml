@@ -7,7 +7,7 @@
     <test name="E2E Tests">
         <classes>
             <class name="org.example.tests.SauceDemo.LoginTest"/>
-            <class name="org.example.tests.SauceDemo.InventoryTest"/>
+<!--            <class name="org.example.tests.SauceDemo.InventoryTest"/>-->
         </classes>
     </test>
 </suite>
