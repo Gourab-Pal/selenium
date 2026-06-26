@@ -11,9 +11,9 @@ public class LoginPage extends BasePage {
     private static final By USERNAME = By.id("user-name");
     private static final By PASSWORD = By.id("password");
     private static final By LOGIN_BUTTON = By.id("login-button");
-    private static final By LOGIN_LOGO = By.className(".login_logo");
+    private static final By LOGIN_LOGO = By.className("login_logo");
     private static final By LOGIN_CREDENTIAL_WRAPPER = By.id("login_credentials");
-    private static final By LOGIN_PASSWORD_WRAPPER = By.id("login_password");
+    private static final By LOGIN_PASSWORD_WRAPPER = By.xpath("//div[@data-test='login-password']");
 
     @Step("Open Sauce Demo login page")
     public LoginPage open() {
