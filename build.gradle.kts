@@ -48,3 +48,7 @@ tasks.test {
         showStandardStreams = true
     }
 }
+
+tasks.named("allureReport") {
+    logging.captureStandardOutput(LogLevel.DEBUG)
+}
