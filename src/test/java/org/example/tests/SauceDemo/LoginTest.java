@@ -23,7 +23,7 @@ public class LoginTest extends BaseTest {
         loginPage.performBasicChecks();
     }
 
-    @Test(description = "Should log in with standard user and see inventory page", groups = {"smoke", "sanity"}, dependsOnMethods = {"loginChecks"})
+    @Test(description = "Should log in with standard user and see inventory page", groups = {"smoke", "sanity"}, dependsOnMethods = "loginChecks")
     @Story("Standard user can log in")
     @Severity(SeverityLevel.CRITICAL)
     public void shouldLoginWithStandardUser() {
