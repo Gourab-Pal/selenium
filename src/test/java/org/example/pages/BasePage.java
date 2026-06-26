@@ -8,8 +8,8 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-
 import java.time.Duration;
+import java.util.List;
 
 public abstract class BasePage {
 
@@ -31,6 +31,11 @@ public abstract class BasePage {
     // Returns WebElement for a given By locator when it is visible. Uses ExpectedConditions
     protected WebElement waitForVisible(By locator) {
         return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+    }
+
+    // Returns list of WebElement for a given By locator when it is visible. Uses ExpectedConditions
+    protected List<WebElement> waitForAllVisible(By locator) {
+        return wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(locator));
     }
 
     // Returns WebElement for a given By locator when it is clickable. Uses ExpectedConditions
